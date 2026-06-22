@@ -1,285 +1,441 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉语比赛系统 (Xitoy tili musobaqasi tizimi / Система соревнований по китайскому языку)</title>
+    <title>Xitoy tili musobaqasi tizimi - Система соревнований по китайскому языку</title>
     
-    <!-- 引入 Tailwind CSS -->
+    <!-- 锁定稳定版本的 CDN，防止 @latest 静默更新导致崩溃 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 引入 React 和 ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- 引入 Babel 用于在浏览器中编译 JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- 引入 Lucide Icons 脚本 -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.22.20/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        
-        /* 自定义按钮样式 */
-        .btn-primary {
-            background-color: #4f46e5;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #4338ca;
-        }
-        .btn-secondary {
-            background-color: #f1f5f9;
-            color: #475569;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.2s;
-            border: 1px solid #e2e8f0;
-        }
-        .btn-secondary:hover {
-            background-color: #e2e8f0;
-        }
-        
-        /* 动画效果 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
+        .btn-primary { background-color: #4f46e5; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-secondary { background-color: #f1f5f9; color: #475569; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background-color: #e2e8f0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-
-    <!-- React 应用的挂载点 -->
+<body class="bg-slate-50">
     <div id="root"></div>
 
-    <!-- 应用程序核心逻辑 (JSX) -->
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <!-- 明确指定 presets="react" 防止 Babel 解析模块默认值出错 -->
+    <script type="text/babel" data-presets="react">
+        const { useState, useEffect, useRef } = window.React;
 
-        // 模拟 Lucide 图标的简单 SVG 组件，因为在浏览器端直接使用 React 版本的 Lucide 比较麻烦
-        const Icon = ({ name, size = 24, className = "" }) => {
-            return (
-                <i data-lucide={name} width={size} height={size} className={className}></i>
-            );
+        // ================= 数据源 (Data Sources) =================
+
+        // HSK 1 题库
+        const QUESTION_BANK_HSK1 = [
+            { q: "1. 你叫什么名字？", pinyin: "Nǐ jiào shénme míngzi?", options: ["A. 我叫大卫 (Wǒ jiào Dàwèi)", "B. 我是美国人 (Wǒ shì Měiguórén)", "C. 我喜欢苹果 (Wǒ xǐhuan píngguǒ)", "D. 二十岁 (Èrshí suì)"], a: 0 },
+            { q: "2. 你是哪国人？", pinyin: "Nǐ shì nǎ guó rén?", options: ["A. 我叫玛丽 (Wǒ jiào Mǎlì)", "B. 我是中国人 (Wǒ shì Zhōngguórén)", "C. 我喜欢吃 (Wǒ xǐhuan chī)", "D. 今天很好 (Jīntiān hěn hǎo)"], a: 1 },
+            { q: "3. 你今年多大了？", pinyin: "Nǐ jīnnián duōdà le?", options: ["A. 我十八岁 (Wǒ shíbā suì)", "B. 纽约 (Niǔyuē)", "C. 学生 (Xuéshēng)", "D. 我的书 (Wǒ de shū)"], a: 0 },
+            { q: "4. 你家有几口人？", pinyin: "Nǐ jiā yǒu jǐ kǒu rén?", options: ["A. 我家很大 (Wǒ jiā hěn dà)", "B. 三个苹果 (Sān ge píngguǒ)", "C. 四口人 (Sì kǒu rén)", "D. 老师 (Lǎoshī)"], a: 2 },
+            { q: "5. 你爸爸做什么工作？", pinyin: "Nǐ bàba zuò shénme gōngzuò?", options: ["A. 他是医生 (Tā shì yīshēng)", "B. 看书 (Kànshū)", "C. 喝茶 (Hēchá)", "D. 五十岁 (Wǔshí suì)"], a: 0 },
+            { q: "6. 你喜欢吃什么中国菜？", pinyin: "Nǐ xǐhuan chī shénme Zhōngguó cài?", options: ["A. 看电影 (Kàn diànyǐng)", "B. 吃包子 (Chī bāozi)", "C. 中国人 (Zhōngguórén)", "D. 很好 (Hěn hǎo)"], a: 1 },
+            { q: "7. 你明天有什么计划？", pinyin: "Nǐ míngtiān yǒu shénme jìhuà?", options: ["A. 昨天去了 (Zuótiān qù le)", "B. 去学校 (Qù xuéxiào)", "C. 很大 (Hěn dà)", "D. 天气好 (Tiānqì hǎo)"], a: 1 },
+            { q: "8. 现在几点了？", pinyin: "Xiànzài jǐ diǎn le?", options: ["A. 下午两点 (Xiàwǔ liǎng diǎn)", "B. 今天 (Jīntiān)", "C. 没有表 (Méiyǒu biǎo)", "D. 明天见 (Míngtiān jiàn)"], a: 0 },
+            { q: "9. 这是什么？", pinyin: "Zhè shì shénme?", options: ["A. 那是我的 (Nà shì wǒ de)", "B. 这是一本书 (Zhè shì yì běn shū)", "C. 他不在 (Tā bú zài)", "D. 三个 (Sān ge)"], a: 1 },
+            { q: "10. 那是谁？", pinyin: "Nà shì shéi?", options: ["A. 那是我的朋友 (Nà shì wǒ de péngyou)", "B. 这是苹果 (Zhè shì píngguǒ)", "C. 不客气 (Bú kèqi)", "D. 昨天 (Zuótiān)"], a: 0 },
+            { q: "11. 你认识他吗？", pinyin: "Nǐ rènshi tā ma?", options: ["A. 他很高 (Tā hěn gāo)", "B. 我认识他 (Wǒ rènshi tā)", "C. 在医院 (Zài yīyuàn)", "D. 下午好 (Xiàwǔ hǎo)"], a: 1 },
+            { q: "12. 苹果多少钱一个？", pinyin: "Píngguǒ duōshao qián yí ge?", options: ["A. 很好吃 (Hěn hǎochī)", "B. 我买苹果 (Wǒ mǎi píngguǒ)", "C. 三块钱 (Sān kuài qián)", "D. 没关系 (Méi guānxi)"], a: 2 },
+            { q: "13. 你去哪儿？", pinyin: "Nǐ qù nǎr?", options: ["A. 我去商店 (Wǒ qù shāngdiàn)", "B. 我是学生 (Wǒ shì xuéshēng)", "C. 很漂亮 (Hěn piàoliang)", "D. 他没去 (Tā méi qù)"], a: 0 },
+            { q: "14. 他在哪儿工作？", pinyin: "Tā zài nǎr gōngzuò?", options: ["A. 他在医院工作 (Tā zài yīyuàn gōngzuò)", "B. 他是医生 (Tā shì yīshēng)", "C. 工作很忙 (Gōngzuò hěn máng)", "D. 八点 (Bā diǎn)"], a: 0 },
+            { q: "15. 今天天气怎么样？", pinyin: "Jīntiān tiānqì zěnmeyàng?", options: ["A. 昨天很冷 (Zuótiān hěn lěng)", "B. 今天太热了 (Jīntiān tài rè le)", "C. 天气很好吃 (Tiānqì hěn hǎochī)", "D. 明天见 (Míngtiān jiàn)"], a: 1 },
+            { q: "16. 明天会下雨吗？", pinyin: "Míngtiān huì xiàyǔ ma?", options: ["A. 水果 (Shuǐguǒ)", "B. 衣服 (Yīfu)", "C. 不会下雨 (Bú huì xiàyǔ)", "D. 今天下雨 (Jīntiān xiàyǔ)"], a: 2 },
+            { q: "17. 你会说汉语吗？", pinyin: "Nǐ huì shuō Hànyǔ ma?", options: ["A. 我会说一点儿 (Wǒ huì shuō yìdiǎnr)", "B. 汉字很难 (Hànzì hěn nán)", "C. 老师很好 (Lǎoshī hěn hǎo)", "D. 这是汉语书 (Zhè shì Hànyǔ shū)"], a: 0 },
+            { q: "18. 汉语难吗？", pinyin: "Hànyǔ nán ma?", options: ["A. 他不难 (Tā bù nán)", "B. 汉语不难 (Hànyǔ bù nán)", "C. 在学校 (Zài xuéxiào)", "D. 吃米饭 (Chī mǐfàn)"], a: 1 },
+            { q: "19. 你想买什么？", pinyin: "Nǐ xiǎng mǎi shénme?", options: ["A. 去商店 (Qù shāngdiàn)", "B. 我想买衣服 (Wǒ xiǎng mǎi yīfu)", "C. 多少钱 (Duōshao qián)", "D. 昨天买的 (Zuótiān mǎi de)"], a: 1 },
+            { q: "20. 先生，请问您找谁？", pinyin: "Xiānsheng, qǐngwèn nín zhǎo shéi?", options: ["A. 我找王老师 (Wǒ zhǎo Wáng lǎoshī)", "B. 没关系 (Méi guānxi)", "C. 我在看书 (Wǒ zài kànshū)", "D. 他不客气 (Tā bú kèqi)"], a: 0 },
+            { q: "21. 你几点睡觉？", pinyin: "Nǐ jǐ diǎn shuìjiào?", options: ["A. 晚上十点 (Wǎnshang shí diǎn)", "B. 早安 (Zǎo'ān)", "C. 在床睡觉 (Zài chuáng shuìjiào)", "D. 睡觉很好 (Shuìjiào hěn hǎo)"], a: 0 },
+            { q: "22. 昨天星期几？", pinyin: "Zuótiān xīngqī jǐ?", options: ["A. 明天星期一 (Míngtiān xīngqī yī)", "B. 昨天星期天 (Zuótiān xīngqī tiān)", "C. 七个月 (Qī ge yuè)", "D. 星期很大 (Xīngqī hěn dà)"], a: 1 },
+            { q: "23. 你喝茶吗？", pinyin: "Nǐ hē chá ma?", options: ["A. 茶很好吃 (Chá hěn hǎochī)", "B. 我不喝茶，我喝水 (Wǒ bù hē chá, wǒ hē shuǐ)", "C. 茶杯 (Chábēi)", "D. 在饭馆 (Zài fànguǎn)"], a: 1 },
+            { q: "24. 你的衣服很漂亮。", pinyin: "Nǐ de yīfu hěn piàoliang.", options: ["A. 对不起 (Duìbuqǐ)", "B. 没关系 (Méi guānxi)", "C. 谢谢 (Xièxie)", "D. 不客气 (Bú kèqi)"], a: 2 },
+            { q: "25. 我可以坐这儿吗？", pinyin: "Wǒ kěyǐ zuò zhèr ma?", options: ["A. 请坐 (Qǐng zuò)", "B. 坐下 (Zuò xia)", "C. 不坐 (Bú zuò)", "D. 在这儿 (Zài zhèr)"], a: 0 },
+            { q: "26. 你看见我的狗了吗？", pinyin: "Nǐ kànjiàn wǒ de gǒu le ma?", options: ["A. 狗很好 (Gǒu hěn hǎo)", "B. 我没看见 (Wǒ méi kànjiàn)", "C. 吃东西 (Chī dōngxi)", "D. 很大 (Hěn dà)"], a: 1 },
+            { q: "27. 你怎么去北京？", pinyin: "Nǐ zěnme qù Běijīng?", options: ["A. 坐飞机去 (Zuò fēijī qù)", "B. 北京很大 (Běijīng hěn dà)", "C. 我喜欢北京 (Wǒ xǐhuan Běijīng)", "D. 明天去 (Míngtiān qù)"], a: 0 },
+            { q: "28. 你什么时候去医院？", pinyin: "Nǐ shénme shíhou qù yīyuàn?", options: ["A. 下午三点 (Xiàwǔ sān diǎn)", "B. 医院很大 (Yīyuàn hěn dà)", "C. 我生病了 (Wǒ shēngbìng le)", "D. 医生很好 (Yīshēng hěn hǎo)"], a: 0 },
+            { q: "29. 谁在里面？", pinyin: "Shéi zài lǐmiàn?", options: ["A. 里面很大 (Lǐmiàn hěn dà)", "B. 爸爸在里面 (Bàba zài lǐmiàn)", "C. 前面没有人 (Qiánmiàn méiyǒu rén)", "D. 不去 (Bú qù)"], a: 1 },
+            { q: "30. 你的电脑在哪儿？", pinyin: "Nǐ de diànnǎo zài nǎr?", options: ["A. 电脑很新 (Diànnǎo hěn xīn)", "B. 我喜欢电脑 (Wǒ xǐhuan diànnǎo)", "C. 在桌子上 (Zài zhuōzi shang)", "D. 买电脑 (Mǎi diànnǎo)"], a: 2 },
+            { q: "31. 你喜欢看电影吗？", pinyin: "Nǐ xǐhuan kàn diànyǐng ma?", options: ["A. 我很喜欢 (Wǒ hěn xǐhuan)", "B. 电影院 (Diànyǐngyuàn)", "C. 看书 (Kàn shū)", "D. 没关系 (Méi guānxi)"], a: 0 },
+            { q: "32. 你会开车吗？", pinyin: "Nǐ huì kāi chē ma?", options: ["A. 我会开出租车 (Wǒ huì kāi chūzūchē)", "B. 车很漂亮 (Chē hěn piàoliang)", "C. 坐车 (Zuò chē)", "D. 很快 (Hěn kuài)"], a: 0 },
+            { q: "33. 我们什么时候吃饭？", pinyin: "Wǒmen shénme shíhou chī fàn?", options: ["A. 中午十二点 (Zhōngwǔ shí'èr diǎn)", "B. 在饭馆 (Zài fànguǎn)", "C. 米饭好吃 (Mǐfàn hǎochī)", "D. 喜欢吃菜 (Xǐhuan chī cài)"], a: 0 },
+            { q: "34. 他是学生吗？", pinyin: "Tā shì xuéshēng ma?", options: ["A. 他在学校 (Tā zài xuéxiào)", "B. 对，他是学生 (Duì, tā shì xuéshēng)", "C. 学生很多 (Xuéshēng hěn duō)", "D. 同学好 (Tóngxué hǎo)"], a: 1 },
+            { q: "35. 这本书是谁的？", pinyin: "Zhè běn shū shì shéi de?", options: ["A. 书在桌子上 (Shū zài zhuōzi shang)", "B. 是我的 (Shì wǒ de)", "C. 我看书 (Wǒ kàn shū)", "D. 多少钱 (Duōshao qián)"], a: 1 },
+            { q: "36. 你想喝什么？", pinyin: "Nǐ xiǎng hē shénme?", options: ["A. 我想喝水 (Wǒ xiǎng hē shuǐ)", "B. 吃米饭 (Chī mǐfàn)", "C. 喜欢喝 (Xǐhuan hē)", "D. 在家 (Zài jiā)"], a: 0 },
+            { q: "37. 前面那个人是谁？", pinyin: "Qiánmiàn nà ge rén shì shéi?", options: ["A. 他很高 (Tā hěn gāo)", "B. 他是我的同学 (Tā shì wǒ de tóngxué)", "C. 前面是商店 (Qiánmiàn shì shāngdiàn)", "D. 去哪儿 (Qù nǎr)"], a: 1 },
+            { q: "38. 你的汉字写得很好。", pinyin: "Nǐ de Hànzì xiě de hěn hǎo.", options: ["A. 谢谢 (Xièxie)", "B. 对不起 (Duìbuqǐ)", "C. 没关系 (Méi guānxi)", "D. 再见 (Zàijiàn)"], a: 0 },
+            { q: "39. 她女儿几岁了？", pinyin: "Tā nǚ'ér jǐ suì le?", options: ["A. 六岁了 (Liù suì le)", "B. 很漂亮 (Hěn piàoliang)", "C. 在学校 (Zài xuéxiào)", "D. 女儿喜欢猫 (Nǚ'ér xǐhuan māo)"], a: 0 },
+            { q: "40. 今天太热了。", pinyin: "Jīntiān tài rè le.", options: ["A. 昨天冷 (Zuótiān lěng)", "B. 是啊，喝点水吧 (Shì a, hē diǎn shuǐ ba)", "C. 天气很好 (Tiānqì hěn hǎo)", "D. 我不热 (Wǒ bú rè)"], a: 1 },
+            { q: "41. 你的朋友叫什么名字？", pinyin: "Nǐ de péngyou jiào shénme míngzi?", options: ["A. 他叫李明 (Tā jiào Lǐ Míng)", "B. 他是朋友 (Tā shì péngyou)", "C. 我们是朋友 (Wǒmen shì péngyou)", "D. 二十岁 (Èrshí suì)"], a: 0 },
+            { q: "42. 我没有钱。", pinyin: "Wǒ méiyǒu qián.", options: ["A. 没关系，我有 (Méi guānxi, wǒ yǒu)", "B. 很多钱 (Hěn duō qián)", "C. 买东西 (Mǎi dōngxi)", "D. 不客气 (Bú kèqi)"], a: 0 },
+            { q: "43. 对不起。", pinyin: "Duìbuqǐ.", options: ["A. 谢谢 (Xièxie)", "B. 再见 (Zàijiàn)", "C. 没关系 (Méi guānxi)", "D. 请坐 (Qǐng zuò)"], a: 2 },
+            { q: "44. 谢谢你。", pinyin: "Xièxie nǐ.", options: ["A. 不客气 (Bú kèqi)", "B. 没关系 (Méi guānxi)", "C. 对不起 (Duìbuqǐ)", "D. 你好 (Nǐ hǎo)"], a: 0 },
+            { q: "45. 老师，再见。", pinyin: "Lǎoshī, zàijiàn.", options: ["A. 你好 (Nǐ hǎo)", "B. 明天见 (Míngtiān jiàn)", "C. 谢谢 (Xièxie)", "D. 请进 (Qǐng jìn)"], a: 1 },
+            { q: "46. 你有几本书？", pinyin: "Nǐ yǒu jǐ běn shū?", options: ["A. 在学校 (Zài xuéxiào)", "B. 五本 (Wǔ běn)", "C. 我喜欢书 (Wǒ xǐhuan shū)", "D. 他没买 (Tā méi mǎi)"], a: 1 },
+            { q: "47. 猫在桌子下面吗？", pinyin: "Māo zài zhuōzi xiàmiàn ma?", options: ["A. 不在，在上面 (Bú zài, zài shàngmiàn)", "B. 猫喜欢鱼 (Māo xǐhuan yú)", "C. 桌子很大 (Zhuōzi hěn dà)", "D. 我没有猫 (Wǒ méiyǒu māo)"], a: 0 },
+            { q: "48. 你喜欢吃水果吗？", pinyin: "Nǐ xǐhuan chī shuǐguǒ ma?", options: ["A. 苹果很红 (Píngguǒ hěn hóng)", "B. 水果多少钱 (Shuǐguǒ duōshao qián)", "C. 我很喜欢 (Wǒ hěn xǐhuan)", "D. 不在 (Bú zài)"], a: 2 },
+            { q: "49. 他在打电话吗？", pinyin: "Tā zài dǎ diànhuà ma?", options: ["A. 电话不好 (Diànhuà bù hǎo)", "B. 是的，他在打电话 (Shì de, tā zài dǎ diànhuà)", "C. 我的电话 (Wǒ de diànhuà)", "D. 号码 (Hàomǎ)"], a: 1 },
+            { q: "50. 这个字怎么读？", pinyin: "Zhège zì zěnme dú?", options: ["A. 写字 (Xiě zì)", "B. 这个字读“爱” (Zhège zì dú “ài”)", "C. 汉字 (Hànzì)", "D. 不认识 (Bú rènshi)"], a: 1 }
+        ];
+
+        // HSK 2 题库
+        const QUESTION_BANK_HSK2 = [
+            { q: "1. 我今天___学校。", pinyin: "Wǒ jīntiān ___ xuéxiào.", options: ["A. 去", "B. 吃", "C. 买"], a: 0 },
+            { q: "2. 你喜欢喝___吗？", pinyin: "Nǐ xǐhuan hē ___ ma?", options: ["A. 电脑", "B. 水", "C. 桌子"], a: 1 },
+            { q: "3. 明天是星期___。", pinyin: "Míngtiān shì xīngqī ___.", options: ["A. 苹果", "B. 三", "C. 老师"], a: 1 },
+            { q: "4. 他___中国人。", pinyin: "Tā ___ Zhōngguórén.", options: ["A. 是", "B. 有", "C. 做"], a: 0 },
+            { q: "5. 我有一个___妹妹。", pinyin: "Wǒ yǒu yí ge ___ mèimei.", options: ["A. 本", "B. 只", "C. 个"], a: 2 },
+            { q: "6. 妈妈在___饭。", pinyin: "Māma zài ___ fàn.", options: ["A. 做", "B. 坐", "C. 看"], a: 0 },
+            { q: "7. 现在几点了？", pinyin: "Xiànzài jǐ diǎn le?", options: ["A. 很好", "B. 三点半", "C. 谢谢"], a: 1 },
+            { q: "8. 我___汉语。", pinyin: "Wǒ ___ Hànyǔ.", options: ["A. 学习", "B. 睡觉", "C. 游泳"], a: 0 },
+            { q: "9. 这个苹果___五块钱。", pinyin: "Zhège píngguǒ ___ wǔ kuài qián.", options: ["A. 有", "B. 是", "C. 要"], a: 2 },
+            { q: "10. 外面很冷，请___衣服。", pinyin: "Wàimiàn hěn lěng, qǐng ___ yīfu.", options: ["A. 穿", "B. 喝", "C. 写"], a: 0 },
+            { q: "11. 我爸爸在医院___。", pinyin: "Wǒ bàba zài yīyuàn ___.", options: ["A. 工作", "B. 认识", "C. 开始"], a: 0 },
+            { q: "12. 今天___怎么样？", pinyin: "Jīntiān ___ zěnmeyàng?", options: ["A. 天气", "B. 飞机", "C. 手机"], a: 0 },
+            { q: "13. 姐姐比我___。", pinyin: "Jiějie bǐ wǒ ___.", options: ["A. 大", "B. 远", "C. 快"], a: 0 },
+            { q: "14. 老师___教室里。", pinyin: "Lǎoshī ___ jiàoshì lǐ.", options: ["A. 给", "B. 在", "C. 从"], a: 1 },
+            { q: "15. 你会不会___车？", pinyin: "Nǐ huì bú huì ___ chē?", options: ["A. 开", "B. 洗", "C. 送"], a: 0 },
+            { q: "16. 我想买一___书。", pinyin: "Wǒ xiǎng mǎi yì ___ shū.", options: ["A. 条", "B. 本", "C. 件"], a: 1 },
+            { q: "17. 请问，银行怎么___？", pinyin: "Qǐngwèn, yínháng zěnme ___?", options: ["A. 去", "B. 走", "C. 到"], a: 1 },
+            { q: "18. 他每天七点___床。", pinyin: "Tā měitiān qī diǎn ___ chuáng.", options: ["A. 起", "B. 下", "C. 回"], a: 0 },
+            { q: "19. 我们一起___电影吧。", pinyin: "Wǒmen yìqǐ ___ diànyǐng ba.", options: ["A. 看", "B. 听", "C. 说"], a: 0 },
+            { q: "20. 我的中文___很好。", pinyin: "Wǒ de Zhōngwén ___ hěn hǎo.", options: ["A. 名字", "B. 水平", "C. 水果"], a: 1 }
+        ];
+
+        // HSK 3 题库
+        const QUESTION_BANK_HSK3 = [
+            { q: "1. 现在已经八点了，他_______起床。", pinyin: "Xiànzài yǐjīng bā diǎn le, tā _______ qǐchuáng.", options: ["A. 正在", "B. 已经", "C. 就要", "D. 刚完"], a: 1 },
+            { q: "2. 你每天_______来学校？坐地铁吗？", pinyin: "Nǐ měitiān _______ lái xuéxiào? Zuò dìtiě ma?", options: ["A. 怎么", "B. 什么", "C. 哪个", "D. 多少"], a: 0 },
+            { q: "3. 你想喝茶_______咖啡？", pinyin: "Nǐ xiǎng hē chá _______ kāfēi?", options: ["A. 还是", "B. 或者", "C. 而且", "D. 但是"], a: 0 },
+            { q: "4. 她每天早上六点_______起床了。", pinyin: "Tā měitiān zǎoshang liù diǎn _______ qǐchuáng le.", options: ["A. 就", "B. 才", "C. 已经", "D. 正在"], a: 0 },
+            { q: "5. 男：你好！你叫什么名字？\n女：我叫王丽，你呢？\n男：我叫张明。认识你很高兴。\n问：女的叫什么名字？", pinyin: "Nán: Nǐ hǎo! Nǐ jiào shénme míngzi?\nNǚ: Wǒ jiào Wáng Lì, nǐ ne?\nNán: Wǒ jiào Zhāng Míng. Rènshi nǐ hěn gāoxìng.\nWèn: Nǚ de jiào shénme míngzi?", options: ["A. 张明", "B. 王丽", "C. 不知道", "D. 李丽"], a: 1 },
+            { q: "6. 我哥哥比我_______三岁。", pinyin: "Wǒ gēge bǐ wǒ _______ sān suì.", options: ["A. 大", "B. 高", "C. 多", "D. 长"], a: 0 },
+            { q: "7. 我住的地方_______学校很近。", pinyin: "Wǒ zhù de dìfang _______ xuéxiào hěn jìn.", options: ["A. 从", "B. 在", "C. 离", "D. 对"], a: 2 },
+            { q: "8. 请你_______窗户打开。", pinyin: "Qǐng nǐ _______ chuānghu dǎkāi.", options: ["A. 被", "B. 把", "C. 给", "D. 让"], a: 1 },
+            { q: "9. 女：你家有几口人？\n男：我家有五口人，爸爸、妈妈、两个姐姐和我。\n问：男的有几个姐姐？", pinyin: "Nǚ: Nǐ jiā yǒu jǐ kǒu rén?\nNán: Wǒ jiā yǒu wǔ kǒu rén, bàba、māma、liǎng ge jiějie hé wǒ.\nWèn: Nán de yǒu jǐ ge jiějie?", options: ["A. 一个", "B. 两个", "C. 三个", "D. 五个"], a: 1 },
+            { q: "10. 我爸爸是医生，妈妈_______老师。", pinyin: "Wǒ bàba shì yīshēng, māma _______ lǎoshī.", options: ["A. 和", "B. 也", "C. 是", "D. 有"], a: 2 },
+            { q: "11. 明天天气怎么样？", pinyin: "Míngtiān tiānqì zěnmeyàng?", options: ["A. 明天会下雨", "B. 明天是星期天", "C. 明天我很忙", "D. 明天我去学校"], a: 0 },
+            { q: "12. 你最喜欢什么课？", pinyin: "Nǐ zuì xǐhuan shénme kè?", options: ["A. 我最喜欢中文课", "B. 我八点上课", "C. 我下课了", "D. 我在教室"], a: 0 },
+            { q: "13. 今天比昨天_______。", pinyin: "Jīntiān bǐ zuótiān _______.", options: ["A. 冷多了", "B. 冷到", "C. 冷过", "D. 冷在"], a: 0 },
+            { q: "14. 男：你怎么还没写完作业？\n女：这道题太难了，我不会。\n问：女的是什么意思？", pinyin: "Nán: Nǐ zěnme hái méi xiě wán zuòyè?\nNǚ: Zhè dào tí tài nán le, wǒ bú huì.\nWèn: Nǚ de shì shénme yìsi?", options: ["A. 她写完作业了", "B. 她觉得作业不难", "C. 她不会做这道题", "D. 她不想写作业"], a: 2 },
+            { q: "15. 要是明天不下雨，我们就_______去公园。", pinyin: "Yàoshi míngtiān bù xiàyǔ, wǒmen jiù _______ qù gōngyuán.", options: ["A. 还", "B. 再", "C. 又", "D. 也"], a: 1 },
+            { q: "16. 我每天早上先刷牙，_______洗脸。", pinyin: "Wǒ měitiān zǎoshang xiān shuāyá, _______ xǐliǎn.", options: ["A. 再", "B. 又", "C. 也", "D. 还"], a: 0 },
+            { q: "17. 他正在_______。", pinyin: "Tā zhèngzài _______.", options: ["A. 看电视", "B. 看电视了", "C. 看完电视", "D. 看着电视了"], a: 0 },
+            { q: "18. 我昨天_______去图书馆，_______去超市了。", pinyin: "Wǒ zuótiān _______ qù túshūguǎn, _______ qù chāoshì le.", options: ["A. 又 / 又", "B. 也 / 也", "C. 没 / 去", "D. 不 / 不"], a: 2 },
+            { q: "19. 女：你吃饭了吗？\n男：还没呢，你呢？\n问：男的是什么意思？", pinyin: "Nǚ: Nǐ chīfàn le ma?\nNán: Hái méi ne, nǐ ne?\nWèn: Nán de shì shénme yìsi?", options: ["A. 他吃饱了", "B. 他还没吃饭", "C. 他不想吃饭", "D. 他在做饭"], a: 1 },
+            { q: "20. 我_______到北京，还没吃饭。", pinyin: "Wǒ _______ dào Běijīng, hái méi chīfàn.", options: ["A. 刚", "B. 就", "C. 才", "D. 已经"], a: 0 }
+        ];
+
+        // HSK 4 题库
+        const QUESTION_BANK_HSK4 = [
+            { q: "1. 他_______会弹钢琴，_______会弹吉他。", pinyin: "Tā _______ huì tán gāngqín, _______ huì tán jítā.", options: ["A. 虽然…但是… (Suīrán… dànshì…)", "B. 不仅…也… (Bùjǐn… yě…)", "C. 即使…也… (Jíshǐ… yě…)", "D. 要么…要么… (Yàome… yàome…)"], a: 1 },
+            { q: "2. 她_______说谎，是个非常诚实的人。", pinyin: "Tā _______ shuōhuǎng, shì ge fēicháng chéngshí de rén.", options: ["A. 经常 (Jīngcháng)", "B. 有时候 (Yǒushíhou)", "C. 从来不 (Cónglái bù)", "D. 总是 (Zǒngshì)"], a: 2 },
+            { q: "3. _______明天下雨，我们_______要去爬山。", pinyin: "_______ míngtiān xiàyǔ, wǒmen _______ yào qù páshān.", options: ["A. 因为…所以… (Yīnwèi… suǒyǐ…)", "B. 虽然…但是… (Suīrán… dànshì…)", "C. 即使…也… (Jíshǐ… yě…)", "D. 不仅…而且… (Bùjǐn… érqiě…)"], a: 2 },
+            { q: "4. _______他身体不舒服，_______坚持来上课了。", pinyin: "_______ tā shēntǐ bù shūfu, _______ jiānchí lái shàngkè le.", options: ["A. 尽管…但是… (Jǐnguǎn… dànshì…)", "B. 如果…就… (Rúguǒ… jiù…)", "C. 只要…就… (Zhǐyào… jiù…)", "D. 不但…而且… (Búdàn… érqiě…)"], a: 0 },
+            { q: "5. 学外语，_______要多听多说，_______要积累词汇和语法。", pinyin: "Xué wàiyǔ, _______ yào duō tīng duō shuō, _______ yào jīlěi cíhuì hé yǔfǎ.", options: ["A. 要么…要么… (Yàome… yàome…)", "B. 首先…其次… (Shǒuxiān… qícì…)", "C. 一边…一边… (Yìbiān… yìbiān…)", "D. 因为…所以… (Yīnwèi… suǒyǐ…)"], a: 1 },
+            { q: "6. 这个问题_______难，我_______要试着解决它。", pinyin: "Zhège wèntí _______ nán, wǒ _______ yào shìzhe jiějué tā.", options: ["A. 只要…就… (Zhǐyào… jiù…)", "B. 又…又… (Yòu… yòu…)", "C. 再…也… (Zài… yě…)", "D. 虽然…但是… (Suīrán… dànshì…)"], a: 2 },
+            { q: "7. ______ 老年人______，保持好心情比什么都重要。", pinyin: "______ lǎoniánrén ______, bǎochí hǎo xīnqíng bǐ shénme dōu zhòngyào.", options: ["A. 在…上 (Zài… shàng)", "B. 对…来说 (Duì… láishuō)", "C. 由于…因此… (Yóuyú… yīncǐ…)", "D. 不管 (Bùguǎn)"], a: 1 },
+            { q: "8. _______你明天有空，_______陪我去书店吧。", pinyin: "_______ nǐ míngtiān yǒu kòng, _______ péi wǒ qù shūdiàn ba.", options: ["A. 如果…就… (Rúguǒ… jiù…)", "B. 即使…也… (Jíshǐ… yě…)", "C. 虽然…但是… (Suīrán… dànshì…)", "D. 不是…而是… (Búshì… érshì…)"], a: 0 },
+            { q: "9. _______早一点出门，_______不会迟到了。", pinyin: "_______ zǎo yìdiǎn chūmén, _______ bú huì chídào le.", options: ["A. 因为…所以… (Yīnwèi… suǒyǐ…)", "B. 虽然…但是… (Suīrán… dànshì…)", "C. 要是…就… (Yàoshi… jiù…)", "D. 不仅…而且… (Bùjǐn… érqiě…)"], a: 2 },
+            { q: "10. 她_______漂亮，_______聪明，大家都喜欢她。", pinyin: "Tā _______ piàoliang, _______ cōngmíng, dàjiā dōu xǐhuan tā.", options: ["A. 要是…就… (Yàoshi… jiù…)", "B. 虽然…但是… (Suīrán… dànshì…)", "C. 既…又… (Jì… yòu…)", "D. 不是…而是… (Búshì… érshì…)"], a: 2 },
+            { q: "11. 他平时学习很努力，_______考试成绩一直很好。", pinyin: "Tā píngshí xuéxí hěn nǔlì, _______ kǎoshì chéngjì yìzhí hěn hǎo.", options: ["A. 但是 (Dànshì)", "B. 因此 (Yīncǐ)", "C. 虽然 (Suīrán)", "D. 如果 (Rúguǒ)"], a: 1 },
+            { q: "12. _______天气不好，运动会推迟了。", pinyin: "_______ tiānqì bù hǎo, yùndònghuì tuīchí le.", options: ["A. 尽管 (Jǐnguǎn)", "B. 即使 (Jíshǐ)", "C. 由于 (Yóuyú)", "D. 因此 (Yīncǐ)"], a: 2 },
+            { q: "13. _____学习____，他从来不会偷懒。", pinyin: "_____ xuéxí ____, tā cónglái bú huì tōulǎn.", options: ["A. 对…来说 (Duì… láishuō)", "B. 在…上 (Zài… shàng)", "C. 在…下 (Zài… xià)", "D. 在…看来 (Zài… kànlái)"], a: 1 },
+            { q: "14. ____老师的帮助____，我的汉语进步很快。", pinyin: "____ lǎoshī de bāngzhù ____, wǒ de Hànyǔ jìnbù hěn kuài.", options: ["A. 在…下 (Zài… xià)", "B. 对…来说 (Duì… láishuō)", "C. 在…上 (Zài… shàng)", "D. 由于…因此… (Yóuyú… yīncǐ…)"], a: 0 },
+            { q: "15. ____父母____，孩子的健康永远是最重要的。", pinyin: "____ fùmǔ ____, háizi de jiànkāng yǒngyuǎn shì zuì zhòngyào de.", options: ["A. 在…下 (Zài… xià)", "B. 在…上 (Zài… shàng)", "C. 在…看来 (Zài… kànlái)", "D. 在…中 (Zài… zhōng)"], a: 2 },
+            { q: "16. 虽然学汉语很难，但他一直在_______，从不_______。", pinyin: "Suīrán xué Hànyǔ hěn nán, dàn tā yìzhí zài _______, cóngbù _______.", options: ["A. 放弃……坚持 (Fàngqì…… jiānchí)", "B. 坚持……放弃 (Jiānchí…… fàngqì)", "C. 同意……反对 (Tóngyì…… fǎnduì)", "D. 反对……同意 (Fǎnduì…… tóngyì)"], a: 1 },
+            { q: "17. 大家都_______这个计划，只有他一个人_______。", pinyin: "Dàjiā dōu _______ zhège jìhuà, zhǐyǒu tā yí ge rén _______.", options: ["A. 同意……反对 (Tóngyì…… fǎnduì)", "B. 反对……同意 (Fǎnduì…… tóngyì)", "C. 坚持……放弃 (Jiānchí…… fàngqì)", "D. 放弃……坚持 (Fàngqì…… jiānchí)"], a: 0 },
+            { q: "18. 现在已经很晚了，______去赶最后一班公交车了，明天早上再走也_____。", pinyin: "Xiànzài yǐjīng hěn wǎn le, ______ qù gǎn zuìhòu yì bān gōngjiāochē le, míngtiān zǎoshang zài zǒu yě _____.", options: ["A. 来得及……来不及 (Láidejí…… láibují)", "B. 来不及……来得及 (Láibují…… láidejí)", "C. 同意……反对 (Tóngyì…… fǎnduì)", "D. 坚持……放弃 (Jiānchí…… fàngqì)"], a: 1 },
+            { q: "19. 经过很多次_______，他终于_______了。", pinyin: "Jīngguò hěn duō cì _______, tā zhōngyú _______ le.", options: ["A. 成功……失败 (Chénggōng…… shībài)", "B. 坚持……放弃 (Jiānchí…… fàngqì)", "C. 失败……成功 (Shībài…… chénggōng)", "D. 放弃……坚持 (Fàngqì…… jiānchí)"], a: 2 },
+            { q: "20. 考试前他非常_______，听了一会儿音乐后才慢慢_______下来。", pinyin: "Kǎoshì qián tā fēicháng _______, tīng le yíhuìr yīnyuè hòu cái mànman _______ xiàlái.", options: ["A. 放松……紧张 (Fàngsōng…… jǐnzhāng)", "B. 紧张……放松 (Jǐnzhāng…… fàngsōng)", "C. 成功……失败 (Chénggōng…… shībài)", "D. 同意……反对 (Tóngyì…… fǎnduì)"], a: 1 },
+            { q: "21. 每个人都有自己的_______和_______，我们要学会互相理解。", pinyin: "Měi ge rén dōu yǒu zìjǐ de _______ hé _______, wǒmen yào xuéhuì hùxiāng lǐjiě.", options: ["A. 优点……缺点 (Yōudiǎn…… quēdiǎn)", "B. 坚持……放弃 (Jiānchí…… fàngqì)", "C. 紧张……放松 (Jǐnzhāng…… fàngsōng)", "D. 成功……失败 (Chénggōng…… shībài)"], a: 0 },
+            { q: "22. 这件事_______他说的那样做，肯定不会出错。", pinyin: "Zhè jiàn shì _______ tā shuō de nàyàng zuò, kěndìng bú huì chūcuò.", options: ["A. 另外 (Lìngwài)", "B. 以为 (Yǐwéi)", "C. 按照 (Ànzhào)", "D. 再说 (Zàishuō)"], a: 2 },
+            { q: "23. 我_______你今天不来了，没想到你竟然来了。", pinyin: "Wǒ _______ nǐ jīntiān bù lái le, méi xiǎngdào nǐ jìngrán lái le.", options: ["A. 按照 (Ànzhào)", "B. 再说 (Zàishuō)", "C. 另外 (Lìngwài)", "D. 以为 (Yǐwéi)"], a: 3 },
+            { q: "24. 这道题确实很难，_______，我觉得多想一想还是能做出来的。", pinyin: "Zhè dào tí quèshí hěn nán, _______, wǒ juéde duō xiǎng yi xiǎng háishì néng zuò chūlái de.", options: ["A. 竟然 (Jìngrán)", "B. 不过 (Búguò)", "C. 再说 (Zàishuō)", "D. 另外 (Lìngwài)"], a: 1 },
+            { q: "25. 他汉语说得非常好，_______可以跟中国人讨论复杂的问题。", pinyin: "Tā Hànyǔ shuō de fēicháng hǎo, _______ kěyǐ gēn Zhōngguórén tǎolùn fùzá de wèntí.", options: ["A. 甚至 (Shènzhì)", "B. 不过 (Búguò)", "C. 另外 (Lìngwài)", "D. 以为 (Yǐwéi)"], a: 0 }
+        ];
+
+        // HSK 5 题库 (无拼音)
+        const QUESTION_BANK_HSK5 = [
+            { q: "1. 他这个人总是对小事_____，大家都不太喜欢跟他合作。", options: ["A. 爱护", "B. 抱怨", "C. 理解", "D. 尊重"], a: 1 },
+            { q: "2. 父母应该_____孩子的自尊心，不要总是批评他们。", options: ["A. 选择", "B. 改变", "C. 爱护", "D. 依赖"], a: 2 },
+            { q: "3. 这件衣服的_____很漂亮，我很喜欢上面的小花。", options: ["A. 含义", "B. 细节", "C. 传说", "D. 技术"], a: 1 },
+            { q: "4. 春节是中国人最重要的_____节日。", options: ["A. 现代", "B. 传统", "C. 幽默", "D. 抽象"], a: 1 },
+            { q: "5. 这个故事讲的是牛郎织女的_____。", options: ["A. 传说", "B. 成语", "C. 理论", "D. 功能"], a: 0 },
+            { q: "6. 鲁迅是中国著名的_____。", options: ["A. 作家", "B. 用户", "C. 祖先", "D. 奇迹"], a: 0 },
+            { q: "7. 他的话很_____，逗得大家都笑了。", options: ["A. 巧妙", "B. 幽默", "C. 丰富", "D. 吉祥"], a: 1 },
+            { q: "8. 现在很多人_____手机，一会儿不看就难受。", options: ["A. 沟通", "B. 发明", "C. 表达", "D. 依赖"], a: 3 },
+            { q: "9. 手机除了打电话，还有很多其他_____。", options: ["A. 功能", "B. 历史", "C. 风格", "D. 含义"], a: 0 },
+            { q: "10. 吸烟对身体有很大_____。", options: ["A. 危害", "B. 争论", "C. 进步", "D. 平衡"], a: 0 },
+            { q: "11. 我们应该多和家人_____，不要总是玩手机。", options: ["A. 庆祝", "B. 沟通", "C. 批评", "D. 回忆"], a: 1 },
+            { q: "12. 这件事的_____需要仔细想一想。", options: ["A. 含义", "B. 钥匙", "C. 泉水", "D. 闹钟"], a: 0 },
+            { q: "13. 他的计划很_____，既省钱又省时间。", options: ["A. 不耐烦", "B. 巧妙", "C. 团圆", "D. 抽象"], a: 1 },
+            { q: "14. 大家对这个问题的看法不同，发生了激烈的_____。", options: ["A. 奇迹", "B. 技术", "C. 争论", "D. 风俗"], a: 2 },
+            { q: "15. 除夕夜，全家人一起吃年夜饭，象征着_____。", options: ["A. 团圆", "B. 选择", "C. 改变", "D. 讽刺"], a: 0 },
+            { q: "16. _____他很努力，_____这次考试还是没有通过。", options: ["A. 因为……所以……", "B. 虽然……但是……", "C. 不仅……而且……", "D. 要么……要么……"], a: 1 },
+            { q: "17. 你_____现在就去，_____明天再去，自己决定。", options: ["A. 与其……不如……", "B. 既然……就……", "C. 要么……要么……", "D. 即使……也……"], a: 2 },
+            { q: "18. _____明天下雨，我们_____要去公园野餐。", options: ["A. 只要……就……", "B. 只有……才……", "C. 无论……都……", "D. 即使……也……"], a: 3 },
+            { q: "19. 学习汉语，_____要多读，_____要多说。", options: ["A. 一边……一边……", "B. 不仅……而且……", "C. 不是……就是……", "D. 虽然……但是……"], a: 1 },
+            { q: "20. _____你答应了我，_____一定要做到。", options: ["A. 因为……所以……", "B. 既然……就……", "C. 尽管……但是……", "D. 如果……就……"], a: 1 },
+            { q: "21. 与其在这儿浪费时间，_____去看书准备考试。", options: ["A. 不如", "B. 还是", "C. 也不", "D. 就要"], a: 0 },
+            { q: "22. 你_____说“对不起”，_____用实际行动弥补错误。", options: ["A. 与其……不如……", "B. 不仅……而且……", "C. 要么……要么……", "D. 虽然……但是……"], a: 0 },
+            { q: "23. _____遇到什么困难，他_____不会放弃。", options: ["A. 不管……都……", "B. 只要……就……", "C. 只有……才……", "D. 即使……也……"], a: 0 },
+            { q: "24. 他_____会说汉语，_____会写毛笔字。", options: ["A. 不是……而是……", "B. 因为……所以……", "C. 不但……而且……", "D. 虽然……但是……"], a: 2 },
+            { q: "25. 我找了很久，_____没找到那本书。", options: ["A. 却", "B. 就", "C. 还", "D. 便"], a: 0 },
+            { q: "26. 你_____不来，提前告诉我一声。", options: ["A. 要是", "B. 因为", "C. 虽然", "D. 并且"], a: 0 },
+            { q: "27. 这件事_____你做，_____我做，总得有人负责。", options: ["A. 不是……就是……", "B. 既然……就……", "C. 因为……所以……", "D. 虽然……但是……"], a: 0 },
+            { q: "28. 他_____走路去学校，也不愿意坐公交车。", options: ["A. 宁可", "B. 而且", "C. 于是", "D. 但是"], a: 0 },
+            { q: "29. _____听了他的解释，我才明白是怎么回事。", options: ["A. 直到", "B. 于是", "C. 否则", "D. 而"], a: 0 },
+            { q: "30. 大家快点儿，_____就赶不上火车了。", options: ["A. 然后", "B. 否则", "C. 所以", "D. 而且"], a: 1 }
+        ];
+
+        // 词汇库
+        const HSK1_WORDS = [
+            { word: "爱", pinyin: "ài" }, { word: "八", pinyin: "bā" }, { word: "爸爸", pinyin: "bàba" }, 
+            { word: "杯子", pinyin: "bēizi" }, { word: "北京", pinyin: "Běijīng" }, { word: "本", pinyin: "běn" }, 
+            { word: "不", pinyin: "bù" }, { word: "不客气", pinyin: "bú kèqi" }, { word: "菜", pinyin: "cài" }, 
+            { word: "茶", pinyin: "chá" }, { word: "吃", pinyin: "chī" }, { word: "出租车", pinyin: "chūzūchē" }, 
+            { word: "打电话", pinyin: "dǎ diànhuà" }, { word: "大", pinyin: "dà" }, { word: "的", pinyin: "de" }, 
+            { word: "点", pinyin: "diǎn" }, { word: "电脑", pinyin: "diànnǎo" }, { word: "电视", pinyin: "diànshì" }, 
+            { word: "电影", pinyin: "diànyǐng" }, { word: "东西", pinyin: "dōngxi" }, { word: "都", pinyin: "dōu" }, 
+            { word: "读", pinyin: "dú" }, { word: "对不起", pinyin: "duìbuqǐ" }, { word: "多", pinyin: "duō" }, 
+            { word: "多少", pinyin: "duōshao" }, { word: "儿子", pinyin: "érzi" }, { word: "二", pinyin: "èr" }, 
+            { word: "饭馆", pinyin: "fànguǎn" }, { word: "飞机", pinyin: "fēijī" }, { word: "分钟", pinyin: "fēnzhōng" }, 
+            { word: "高兴", pinyin: "gāoxìng" }, { word: "个", pinyin: "gè" }, { word: "工作", pinyin: "gōngzuò" }, 
+            { word: "狗", pinyin: "gǒu" }, { word: "汉语", pinyin: "Hànyǔ" }, { word: "好", pinyin: "hǎo" }, 
+            { word: "号", pinyin: "hào" }, { word: "喝", pinyin: "hē" }, { word: "和", pinyin: "hé" }, 
+            { word: "很", pinyin: "hěn" }, { word: "后面", pinyin: "hòumiàn" }, { word: "回", pinyin: "huí" }, 
+            { word: "会", pinyin: "huì" }, { word: "几", pinyin: "jǐ" }, { word: "家", pinyin: "jiā" }, 
+            { word: "叫", pinyin: "jiào" }, { word: "今天", pinyin: "jīntiān" }, { word: "九", pinyin: "jiǔ" }, 
+            { word: "开", pinyin: "kāi" }, { word: "看", pinyin: "kàn" }, { word: "看见", pinyin: "kànjiàn" }, 
+            { word: "块", pinyin: "kuài" }, { word: "来", pinyin: "lái" }, { word: "老师", pinyin: "lǎoshī" }, 
+            { word: "了", pinyin: "le" }, { word: "冷", pinyin: "lěng" }, { word: "里", pinyin: "lǐ" }, 
+            { word: "零", pinyin: "líng" }, { word: "六", pinyin: "liù" }, { word: "妈妈", pinyin: "māma" }, 
+            { word: "吗", pinyin: "ma" }, { word: "买", pinyin: "mǎi" }, { word: "猫", pinyin: "māo" }, 
+            { word: "没", pinyin: "méi" }, { word: "没关系", pinyin: "méi guānxi" }, { word: "没有", pinyin: "méiyǒu" }, 
+            { word: "米饭", pinyin: "mǐfàn" }, { word: "明天", pinyin: "míngtiān" }, { word: "名字", pinyin: "míngzi" }, 
+            { word: "哪", pinyin: "nǎ" }, { word: "哪儿", pinyin: "nǎr" }, { word: "那", pinyin: "nà" }, 
+            { word: "呢", pinyin: "ne" }, { word: "能", pinyin: "néng" }, { word: "你", pinyin: "nǐ" }, 
+            { word: "年", pinyin: "nián" }, { word: "女儿", pinyin: "nǚ'ér" }, { word: "朋友", pinyin: "péngyou" }, 
+            { word: "漂亮", pinyin: "piàoliang" }, { word: "苹果", pinyin: "píngguǒ" }, { word: "七", pinyin: "qī" }, 
+            { word: "钱", pinyin: "qián" }, { word: "前面", pinyin: "qiánmiàn" }, { word: "请", pinyin: "qǐng" }, 
+            { word: "去", pinyin: "qù" }, { word: "热", pinyin: "rè" }, { word: "人", pinyin: "rén" }, 
+            { word: "认识", pinyin: "rènshi" }, { word: "三", pinyin: "sān" }, { word: "商店", pinyin: "shāngdiàn" }, 
+            { word: "上", pinyin: "shàng" }, { word: "上午", pinyin: "shàngwǔ" }, { word: "少", pinyin: "shǎo" }, 
+            { word: "谁", pinyin: "shéi" }, { word: "什么", pinyin: "shénme" }, { word: "十", pinyin: "shí" }, 
+            { word: "时候", pinyin: "shíhou" }, { word: "是", pinyin: "shì" }, { word: "书", pinyin: "shū" }, 
+            { word: "水", pinyin: "shuǐ" }, { word: "水果", pinyin: "shuǐguǒ" }, { word: "睡觉", pinyin: "shuìjiào" }, 
+            { word: "说", pinyin: "shuō" }, { word: "说话", pinyin: "shuōhuà" }, { word: "四", pinyin: "sì" }, 
+            { word: "昨天", pinyin: "zuótiān" }, { word: "坐", pinyin: "zuò" }, { word: "做", pinyin: "zuò" }
+        ];
+
+        const HSK2_WORDS = [
+            { word: "爱", pinyin: "ài" }, { word: "八", pinyin: "bā" }, { word: "爸爸", pinyin: "bàba" },
+            { word: "杯子", pinyin: "bēizi" }, { word: "北京", pinyin: "Běijīng" }, { word: "本", pinyin: "běn" },
+            { word: "不客气", pinyin: "bú kèqi" }, { word: "菜", pinyin: "cài" }, { word: "茶", pinyin: "chá" },
+            { word: "吃", pinyin: "chī" }, { word: "出租车", pinyin: "chūzūchē" }, { word: "打电话", pinyin: "dǎ diànhuà" },
+            { word: "大家", pinyin: "dàjiā" }, { word: "到", pinyin: "dào" }, { word: "得", pinyin: "de" },
+            { word: "等", pinyin: "děng" }, { word: "弟弟", pinyin: "dìdi" }, { word: "第一", pinyin: "dì yī" },
+            { word: "懂", pinyin: "dǒng" }, { word: "对不起", pinyin: "duìbuqǐ" }, { word: "多", pinyin: "duō" },
+            { word: "儿子", pinyin: "érzi" }, { word: "二", pinyin: "èr" }, { word: "饭店", pinyin: "fàndiàn" },
+            { word: "房间", pinyin: "fángjiān" }, { word: "非常", pinyin: "fēicháng" }, { word: "高兴", pinyin: "gāoxìng" },
+            { word: "告诉", pinyin: "gàosu" }, { word: "哥哥", pinyin: "gēge" }, { word: "给", pinyin: "gěi" },
+            { word: "公共汽车", pinyin: "gōnggòng qìchē" }, { word: "孩子", pinyin: "háizi" }, { word: "汉语", pinyin: "Hànyǔ" },
+            { word: "好吃", pinyin: "hǎochī" }, { word: "号", pinyin: "hào" }, { word: "后面", pinyin: "hòumiàn" },
+            { word: "欢迎", pinyin: "huānyíng" }, { word: "回", pinyin: "huí" }, { word: "机场", pinyin: "jīchǎng" },
+            { word: "鸡蛋", pinyin: "jīdàn" }, { word: "觉得", pinyin: "juéde" }, { word: "开始", pinyin: "kāishǐ" },
+            { word: "考试", pinyin: "kǎoshì" }, { word: "可能", pinyin: "kěnéng" }, { word: "快乐", pinyin: "kuàilè" },
+            { word: "累", pinyin: "lèi" }, { word: "离", pinyin: "lí" }, { word: "两", pinyin: "liǎng" },
+            { word: "路", pinyin: "lù" }, { word: "马上", pinyin: "mǎshàng" }, { word: "每", pinyin: "měi" },
+            { word: "面包", pinyin: "miànbāo" }, { word: "名字", pinyin: "míngzi" }, { word: "男", pinyin: "nán" },
+            { word: "女", pinyin: "nǚ" }, { word: "旁边", pinyin: "pángbiān" }, { word: "朋友", pinyin: "péngyou" },
+            { word: "起床", pinyin: "qǐchuáng" }, { word: "去年", pinyin: "qùnián" }, { word: "时间", pinyin: "shíjiān" }
+        ];
+
+        const HSK3_WORDS = [
+            { word: "题", pinyin: "tí" }, { word: "房", pinyin: "fáng" }, { word: "间", pinyin: "jiān" },
+            { word: "课", pinyin: "kè" }, { word: "教", pinyin: "jiào" }, { word: "室", pinyin: "shì" },
+            { word: "老", pinyin: "lǎo" }, { word: "师", pinyin: "shī" }, { word: "同", pinyin: "tóng" },
+            { word: "学", pinyin: "xué" }, { word: "医", pinyin: "yī" }, { word: "院", pinyin: "yuàn" },
+            { word: "生", pinyin: "shēng" }, { word: "先", pinyin: "xiān" }, { word: "小", pinyin: "xiǎo" },
+            { word: "姐", pinyin: "jiě" }, { word: "名", pinyin: "míng" }, { word: "字", pinyin: "zì" },
+            { word: "机", pinyin: "jī" }, { word: "场", pinyin: "chǎng" }, { word: "旅", pinyin: "lǚ" },
+            { word: "馆", pinyin: "guǎn" }, { word: "店", pinyin: "diàn" }, { word: "饭", pinyin: "fàn" },
+            { word: "茶", pinyin: "chá" }, { word: "水", pinyin: "shuǐ" }, { word: "果", pinyin: "guǒ" },
+            { word: "菜", pinyin: "cài" }, { word: "肉", pinyin: "ròu" }, { word: "蛋", pinyin: "dàn" },
+            { word: "信", pinyin: "xìn" }, { word: "息", pinyin: "xī" }, { word: "诉", pinyin: "sù" },
+            { word: "知", pinyin: "zhī" }, { word: "道", pinyin: "dào" }, { word: "告", pinyin: "gào" },
+            { word: "诉", pinyin: "sù" }, { word: "候", pinyin: "hòu" }, { word: "体", pinyin: "tǐ" },
+            { word: "育", pinyin: "yù" }, { word: "城", pinyin: "chéng" }, { word: "市", pinyin: "shì" },
+            { word: "公", pinyin: "gōng" }, { word: "司", pinyin: "sī" }, { word: "工", pinyin: "gōng" },
+            { word: "作", pinyin: "zuò" }, { word: "学", pinyin: "xué" }, { word: "校", pinyin: "xiào" },
+            { word: "书", pinyin: "shū" }, { word: "包", pinyin: "bāo" }
+        ];
+
+        const HSK4_WORDS = [
+            { word: "按照", pinyin: "ànzhào" }, { word: "无论如何", pinyin: "wúlùnrúhé" }, { word: "竟然", pinyin: "jìngrán" },
+            { word: "估计", pinyin: "gūjì" }, { word: "大概", pinyin: "dàgài" }, { word: "几乎", pinyin: "jīhū" },
+            { word: "正好", pinyin: "zhènghǎo" }, { word: "否则", pinyin: "fǒuzé" }, { word: "详细", pinyin: "xiángxì" },
+            { word: "仔细", pinyin: "zǐxì" }, { word: "往往", pinyin: "wǎngwǎng" }, { word: "因此", pinyin: "yīncǐ" },
+            { word: "值得", pinyin: "zhíde" }, { word: "辛苦", pinyin: "xīnkǔ" }, { word: "放松", pinyin: "fàngsōng" },
+            { word: "堵车", pinyin: "dǔchē" }, { word: "过程", pinyin: "guòchéng" }, { word: "完全", pinyin: "wánquán" },
+            { word: "计划", pinyin: "jìhuà" }, { word: "保证", pinyin: "bǎozhèng" }, { word: "按时", pinyin: "ànshí" },
+            { word: "流行", pinyin: "liúxíng" }, { word: "可是", pinyin: "kěshì" }, { word: "浪费", pinyin: "làngfèi" },
+            { word: "事半功倍", pinyin: "shìbàngōngbèi" }, { word: "信心", pinyin: "xìnxīn" }, { word: "及时", pinyin: "jíshí" },
+            { word: "困难", pinyin: "kùnnan" }, { word: "周围", pinyin: "zhōuwéi" }, { word: "结果", pinyin: "jiéguǒ" },
+            { word: "印象", pinyin: "yìnxiàng" }, { word: "尤其", pinyin: "yóuqí" }, { word: "肯定", pinyin: "kěndìng" },
+            { word: "也许", pinyin: "yěxǔ" }, { word: "重要", pinyin: "zhòngyào" }, { word: "另外", pinyin: "lìngwài" },
+            { word: "条件", pinyin: "tiáojiàn" }, { word: "并且", pinyin: "bìngqiě" }, { word: "其中", pinyin: "qízhōng" },
+            { word: "比如", pinyin: "bǐrú" }, { word: "甚至", pinyin: "shènzhì" }, { word: "通过", pinyin: "tōngguò" },
+            { word: "解决", pinyin: "jiějué" }, { word: "决定", pinyin: "juédìng" }, { word: "反对", pinyin: "fǎnduì" },
+            { word: "同意", pinyin: "tóngyì" }
+        ];
+
+        const HSK5_WORDS = [
+            { word: "细节", pinyin: "xìjié" }, { word: "抱怨", pinyin: "bàoyuàn" }, { word: "爱护", pinyin: "àihù" }, 
+            { word: "不耐烦", pinyin: "búnàifán" }, { word: "选择", pinyin: "xuǎnzé" }, { word: "改变", pinyin: "gǎibiàn" }, 
+            { word: "沟通", pinyin: "gōutōng" }, { word: "理解", pinyin: "lǐjiě" }, { word: "尊重", pinyin: "zūnzhòng" }, 
+            { word: "钥匙", pinyin: "yàoshi" }, { word: "背", pinyin: "bēi/bèi" }, { word: "泉水", pinyin: "quánshuǐ" }, 
+            { word: "除夕", pinyin: "chúxī" }, { word: "由来", pinyin: "yóulái" }, { word: "传说", pinyin: "chuánshuō" }, 
+            { word: "传统", pinyin: "chuántǒng" }, { word: "历史", pinyin: "lìshǐ" }, { word: "文化", pinyin: "wénhuà" }, 
+            { word: "风俗", pinyin: "fēngsú" }, { word: "庆祝", pinyin: "qìngzhù" }, { word: "吉祥", pinyin: "jíxiáng" }, 
+            { word: "团圆", pinyin: "tuányuán" }, { word: "祖先", pinyin: "zǔxiān" }, { word: "丰富", pinyin: "fēngfù" }, 
+            { word: "成语", pinyin: "chéngyǔ" }, { word: "朝三暮四", pinyin: "zhāosānmùsì" }, { word: "含义", pinyin: "hányì" }, 
+            { word: "鲁迅", pinyin: "Lǔ Xùn" }, { word: "作家", pinyin: "zuòjiā" }, { word: "讽刺", pinyin: "fěngcì" }, 
+            { word: "幽默", pinyin: "yōumò" }, { word: "巧妙", pinyin: "qiǎomiào" }, { word: "文学", pinyin: "wénxué" },
+            { word: "批评", pinyin: "pīpíng" }, { word: "回忆", pinyin: "huíyì" }, { word: "感动", pinyin: "gǎndòng" },
+            { word: "表达", pinyin: "biǎodá" }, { word: "闹钟", pinyin: "nàozhōng" }, { word: "危害", pinyin: "wēihài" },
+            { word: "用户", pinyin: "yònghù" }, { word: "社交", pinyin: "shèjiāo" }, { word: "功能", pinyin: "gōngnéng" },
+            { word: "依赖", pinyin: "yīlài" }, { word: "人工智能", pinyin: "réngōng zhìnéng" }, { word: "奇迹", pinyin: "qíjì" },
+            { word: "争论", pinyin: "zhēnglùn" }, { word: "技术", pinyin: "jìshù" }, { word: "发明", pinyin: "fāmíng" },
+            { word: "进步", pinyin: "jìnbù" }, { word: "未来", pinyin: "wèilái" }
+        ];
+
+        // 核心配置：按级别整合数据
+        const COMPETITION_DATA = {
+            hsk1: { 
+                level: 'HSK 1', 
+                topics: [
+                    "1. 我的一天 (Wǒ de yì tiān) - Mening bir kunim\n说明：介绍你一天的生活。", 
+                    "2. 我的家 (Wǒ de jiā) - Mening oilam\n说明：介绍你的家人。", 
+                    "3. 自我介绍 (Zìwǒ jièshào) - O'zimni tanishtirish\n说明：简单介绍你自己。"
+                ], 
+                questions: QUESTION_BANK_HSK1, 
+                words: HSK1_WORDS 
+            },
+            hsk2: { 
+                level: 'HSK 2', 
+                topics: [
+                    "1. 自我介绍 (Zìwǒ jièshào) - O'zimni tanishtirish\n说明：介绍你的基本信息。", 
+                    "2. 你每天几点起床？起床后做什么？ (Nǐ měitiān jǐ diǎn qǐchuáng? Qǐchuáng hòu zuò shénme?) - Har kuni soat nechada turasiz? Turgandan keyin nima qilasiz?", 
+                    "3. 你喜欢吃什么？为什么？ (Nǐ xǐhuan chī shénme? Wèishénme?) - Nima yeyishni yoqtirasiz? Nima uchun?"
+                ], 
+                questions: QUESTION_BANK_HSK2, 
+                words: HSK2_WORDS 
+            },
+            hsk3: { 
+                level: 'HSK 3', 
+                topics: [
+                    "1. 我的周末 (My Weekend) - Mening dam olish kunim\n说明：周末一般做什么？喜欢一个人还是和朋友一起？为什么？", 
+                    "2. 我最喜欢的食物 (My Favorite Food) - Mening sevimli taomim\n说明：喜欢吃什么？在哪里吃？和谁一起吃？", 
+                    "3. 我的家 (My Home) - Mening oilam/uyim\n说明：家有几口人？住在哪里？最喜欢家里的哪个地方？"
+                ], 
+                questions: QUESTION_BANK_HSK3, 
+                words: HSK3_WORDS 
+            },
+            hsk4: { 
+                level: 'HSK 4', 
+                topics: [
+                    "自我介绍", 
+                    "做事情时，你认为结果重要还是过程重要？为什么？", 
+                    "你喜欢吃巧克力吗？吃巧克力对人的心情有什么影响？", 
+                    "你经常网上购物吗？网上购物有什么好处？", 
+                    "你认为经常换工作好不好？为什么？", 
+                    "你认为对婚姻来说，爱情重要吗？", 
+                    "你喜欢哪个城市？你喜欢的城市有哪些特色？", 
+                    "你有中国朋友吗？一般和他们一起做什么？"
+                ], 
+                questions: QUESTION_BANK_HSK4, 
+                words: HSK4_WORDS 
+            },
+            hsk5: { 
+                level: 'HSK 5', 
+                topics: [
+                    "我最感谢的人\n说明：请介绍一个你最感谢的人，说一两件小事，以及为什么感谢他/她。", 
+                    "我最喜欢的一个节日\n说明：请说说你最喜欢哪个节日，通常做什么、吃什么，为什么喜欢。", 
+                    "手机对我来说重要吗？\n说明：请简单说说你每天用手机做什么，如果一天没有手机会怎么样。"
+                ], 
+                questions: QUESTION_BANK_HSK5, 
+                words: HSK5_WORDS 
+            }
         };
 
-        // ================= 数据源 =================
-        const TOPICS = ["我的一天", "我的好朋友", "自我介绍"];
+        // ================= 组件 (Components) =================
 
-        const QUESTION_BANK = [
-            { q: "1. 你叫什么名字？", options: ["A. 我叫大卫", "B. 我是美国人", "C. 我喜欢苹果", "D. 我二十岁"], a: 0 },
-            { q: "2. 你是哪国人？", options: ["A. 我叫玛丽", "B. 我是中国人", "C. 我喜欢吃", "D. 今天很好"], a: 1 },
-            { q: "3. 你今年多大了？", options: ["A. 我十八岁", "B. 我家在纽约", "C. 我是学生", "D. 这是我的书"], a: 0 },
-            { q: "4. 你家有几口人？", options: ["A. 我家很大", "B. 有三个苹果", "C. 我家有四口人", "D. 他们是我的家人"], a: 2 },
-            { q: "5. 你爸爸做什么工作？", options: ["A. 他是医生", "B. 他在看书", "C. 他喜欢喝茶", "D. 他五十岁"], a: 0 },
-            { q: "6. 你妈妈做什么工作？", options: ["A. 妈妈很漂亮", "B. 妈妈是老师", "C. 妈妈在做饭", "D. 妈妈喜欢我"], a: 1 },
-            { q: "7. 你喜欢吃什么中国菜？", options: ["A. 我喜欢看电影", "B. 我喜欢吃包子", "C. 我是中国人", "D. 中国很大"], a: 1 },
-            { q: "8. 你平时喜欢喝什么？", options: ["A. 我喜欢喝水", "B. 我喜欢吃饭", "C. 我喜欢睡觉", "D. 我喜欢运动"], a: 0 },
-            { q: "9. 你的爱好是什么？", options: ["A. 我叫李华", "B. 我二十岁", "C. 我喜欢踢足球", "D. 我每天上学"], a: 2 },
-            { q: "10. 你周末喜欢做什么？", options: ["A. 我喜欢看书", "B. 我喜欢吃苹果", "C. 我喜欢红色", "D. 我周末不高兴"], a: 0 },
-            { q: "11. 你为什么学习汉语？", options: ["A. 因为汉语很难", "B. 因为我去过中国", "C. 因为我喜欢中国文化", "D. 因为我是学生"], a: 2 },
-            { q: "12. 你学习汉语多长时间了？", options: ["A. 我学习很好", "B. 两年了", "C. 汉语很有意思", "D. 我在学校学习"], a: 1 },
-            { q: "13. 你觉得汉语难吗？", options: ["A. 汉语很好听", "B. 我觉得汉字很难", "C. 我喜欢说汉语", "D. 老师很好"], a: 1 },
-            { q: "14. 你喜欢看中国电影吗？", options: ["A. 电影院很远", "B. 我喜欢，很有意思", "C. 中国很大", "D. 我不认识他"], a: 1 },
-            { q: "15. 你听过中国音乐吗？", options: ["A. 听过，很好听", "B. 音乐是红色的", "C. 我喜欢唱歌", "D. 他是歌手"], a: 0 },
-            { q: "16. 今天天气怎么样？", options: ["A. 今天星期二", "B. 今天很热", "C. 今天我在家", "D. 今天很好吃"], a: 1 },
-            { q: "17. 你最喜欢什么季节？", options: ["A. 我喜欢春天", "B. 我喜欢下雨", "C. 我喜欢早上", "D. 我喜欢吃西瓜"], a: 0 },
-            { q: "18. 你的生日是几月几号？", options: ["A. 我二十岁", "B. 今天星期五", "C. 五月十号", "D. 明天放假"], a: 2 },
-            { q: "19. 你昨天晚上做了什么？", options: ["A. 我在睡觉", "B. 我去看了电影", "C. 我明天去买东西", "D. 我喜欢晚上"], a: 1 },
-            { q: "20. 你明天有什么计划？", options: ["A. 我昨天去了北京", "B. 我想去图书馆看书", "C. 我每天都去学校", "D. 明天天气很好"], a: 1 },
-            { q: "21. 你最喜欢什么颜色？", options: ["A. 我喜欢猫", "B. 我喜欢蓝色", "C. 我喜欢长城", "D. 我喜欢穿衣服"], a: 1 },
-            { q: "22. 你喜欢什么运动？", options: ["A. 我喜欢打篮球", "B. 我喜欢看电视", "C. 我喜欢睡觉", "D. 我喜欢听音乐"], a: 0 },
-            { q: "23. 你会游泳吗？", options: ["A. 水很冷", "B. 我会，我游得很好", "C. 我喜欢吃鱼", "D. 游泳池很大"], a: 1 },
-            { q: "24. 你每天几点起床？", options: ["A. 我起得很早", "B. 我早上七点起床", "C. 我喜欢睡觉", "D. 今天八点"], a: 1 },
-            { q: "25. 你每天几点睡觉？", options: ["A. 晚上十点半", "B. 我在床上睡觉", "C. 睡觉很好", "D. 我昨天没睡觉"], a: 0 },
-            { q: "26. 你怎么去学校/公司？", options: ["A. 我坐公共汽车去", "B. 学校很大", "C. 我在学校吃饭", "D. 老师在学校"], a: 0 },
-            { q: "27. 你最喜欢的水果是什么？", options: ["A. 我喜欢吃肉", "B. 我最喜欢苹果", "C. 水果很甜", "D. 我买了很多水果"], a: 1 },
-            { q: "28. 你会做饭吗？你会做哪些菜？", options: ["A. 我在饭馆吃饭", "B. 饭很好吃", "C. 我会做中国菜", "D. 妈妈做饭"], a: 2 },
-            { q: "29. 你去过中国吗？", options: ["A. 中国很大", "B. 我想去中国", "C. 没去过，但我想去", "D. 我是中国人"], a: 2 },
-            { q: "30. 你想去中国旅游吗？", options: ["A. 想去，我想看熊猫", "B. 中国很远", "C. 我在旅游", "D. 北京是首都"], a: 0 },
-            { q: "31. 你的好朋友是谁？", options: ["A. 他很高", "B. 玛丽是我的好朋友", "C. 我们喜欢玩", "D. 他昨天来了"], a: 1 },
-            { q: "32. 你喜欢看书吗？最喜欢什么书？", options: ["A. 图书馆有很多书", "B. 喜欢，我最爱看小说", "C. 书很贵", "D. 我买了一本书"], a: 1 },
-            { q: "33. 你经常上网做什么？", options: ["A. 电脑是黑色的", "B. 我经常上网看新闻", "C. 网上有很多东西", "D. 我没有电脑"], a: 1 },
-            { q: "34. 你有宠物吗？", options: ["A. 我有一只可爱的小狗", "B. 猫喜欢吃鱼", "C. 动物园里有很多动物", "D. 我喜欢动物"], a: 0 },
-            { q: "35. 你喜欢买东西吗？", options: ["A. 商店很近", "B. 喜欢，我经常去超市", "C. 东西太贵了", "D. 我没有钱"], a: 1 },
-            { q: "36. 你的手机是什么颜色的？", options: ["A. 手机很新", "B. 是白色的", "C. 我在打电话", "D. 这是我的手机"], a: 1 },
-            { q: "37. 请问现在几点了？", options: ["A. 现在是下午两点", "B. 今天很晚了", "C. 我没有手表", "D. 明天见"], a: 0 },
-            { q: "38. 你最喜欢的节日是什么？", options: ["A. 我喜欢休息", "B. 我最喜欢春节", "C. 节日很快乐", "D. 今天是节日"], a: 1 },
-            { q: "39. 你觉得今天热不热？", options: ["A. 今天星期三", "B. 有点儿热", "C. 昨天不热", "D. 我喜欢夏天"], a: 1 },
-            { q: "40. 你认识多少个汉字？", options: ["A. 汉字很有意思", "B. 大概五百个", "C. 我会写字", "D. 汉字很难"], a: 1 },
-            { q: "41. 谁是你的汉语老师？", options: ["A. 王老师教我汉语", "B. 老师在教室里", "C. 我喜欢汉语", "D. 老师很好"], a: 0 },
-            { q: "42. 你的学校大不大？", options: ["A. 学校在市中心", "B. 我的学校非常大", "C. 我每天去学校", "D. 学校里有很多学生"], a: 1 },
-            { q: "43. 你现在在哪个城市？", options: ["A. 城市很漂亮", "B. 我在北京", "C. 我想去上海", "D. 城市里人很多"], a: 1 },
-            { q: "44. 你喜欢住在城市还是农村？", options: ["A. 城市很方便", "B. 农村空气好", "C. 我喜欢住在城市", "D. 房子很大"], a: 2 },
-            { q: "45. 你常常去超市买东西吗？", options: ["A. 超市的东西很多", "B. 常常去，我喜欢买零食", "C. 超市很远", "D. 我昨天去了超市"], a: 1 },
-            { q: "46. 你今天穿的衣服是什么颜色的？", options: ["A. 衣服很漂亮", "B. 是红色的", "C. 我喜欢这件衣服", "D. 这件衣服太大了"], a: 1 },
-            { q: "47. 你喜欢吃米饭还是面条？", options: ["A. 都好吃", "B. 米饭很白", "C. 我更喜欢面条", "D. 我在饭馆吃饭"], a: 2 },
-            { q: "48. 你每天喝几杯水？", options: ["A. 水很好喝", "B. 我喝茶", "C. 大概六杯", "D. 杯子是玻璃的"], a: 2 },
-            { q: "49. 你累的时候喜欢做什么？", options: ["A. 我很累", "B. 我喜欢听音乐休息", "C. 昨天太忙了", "D. 睡觉很好"], a: 1 },
-            { q: "50. 请说出一句你最喜欢的中文。", options: ["A. 我喜欢中文", "B. “有志者事竟成”", "C. 中文很难写", "D. 我每天学习"], a: 1 }
-        ];
-
-        const HSK_WORDS = [
-            { word: "爱", pinyin: "ài" }, { word: "爸爸", pinyin: "bà ba" }, { word: "杯子", pinyin: "bēi zi" }, 
-            { word: "北京", pinyin: "Běi jīng" }, { word: "不", pinyin: "bù" }, { word: "菜", pinyin: "cài" }, 
-            { word: "茶", pinyin: "chá" }, { word: "吃", pinyin: "chī" }, { word: "出租车", pinyin: "chū zū chē" }, 
-            { word: "打电话", pinyin: "dǎ diàn huà" }, { word: "大", pinyin: "dà" }, { word: "的", pinyin: "de" }, 
-            { word: "点", pinyin: "diǎn" }, { word: "电脑", pinyin: "diàn nǎo" }, { word: "电视", pinyin: "diàn shì" }, 
-            { word: "电影", pinyin: "diàn yǐng" }, { word: "东西", pinyin: "dōng xi" }, { word: "都", pinyin: "dōu" }, 
-            { word: "读", pinyin: "dú" }, { word: "对不起", pinyin: "duì bu qǐ" }, { word: "多", pinyin: "duō" }, 
-            { word: "多少", pinyin: "duō shao" }, { word: "儿子", pinyin: "ér zi" }, { word: "饭馆", pinyin: "fàn guǎn" }, 
-            { word: "飞机", pinyin: "fēi jī" }, { word: "分钟", pinyin: "fēn zhōng" }, { word: "高兴", pinyin: "gāo xìng" }, 
-            { word: "工作", pinyin: "gōng zuò" }, { word: "汉语", pinyin: "Hàn yǔ" }, { word: "好", pinyin: "hǎo" }, 
-            { word: "喝", pinyin: "hē" }, { word: "和", pinyin: "hé" }, { word: "很", pinyin: "hěn" }, 
-            { word: "会", pinyin: "huì" }, { word: "几", pinyin: "jǐ" }, { word: "家", pinyin: "jiā" }, 
-            { word: "叫", pinyin: "jiào" }, { word: "今天", pinyin: "jīn tiān" }, { word: "看", pinyin: "kàn" }, 
-            { word: "看见", pinyin: "kàn jiàn" }, { word: "块", pinyin: "kuài" }, { word: "来", pinyin: "lái" }, 
-            { word: "老师", pinyin: "lǎo shī" }, { word: "冷", pinyin: "lěng" }, { word: "里", pinyin: "lǐ" }, 
-            { word: "妈妈", pinyin: "mā ma" }, { word: "吗", pinyin: "ma" }, { word: "买", pinyin: "mǎi" }, 
-            { word: "猫", pinyin: "māo" }, { word: "没关系", pinyin: "méi guān xi" }, { word: "明天", pinyin: "míng tiān" }, 
-            { word: "名字", pinyin: "míng zi" }, { word: "哪", pinyin: "nǎ" }, { word: "哪儿", pinyin: "nǎr" }, 
-            { word: "那", pinyin: "nà" }, { word: "能", pinyin: "néng" }, { word: "你", pinyin: "nǐ" }, 
-            { word: "年", pinyin: "nián" }, { word: "女儿", pinyin: "nǚ ér" }, { word: "朋友", pinyin: "péng you" }, 
-            { word: "漂亮", pinyin: "piào liang" }, { word: "苹果", pinyin: "píng guǒ" }, { word: "钱", pinyin: "qián" }, 
-            { word: "请", pinyin: "qǐng" }, { word: "去", pinyin: "qù" }, { word: "热", pinyin: "rè" }, 
-            { word: "人", pinyin: "rén" }, { word: "认识", pinyin: "rèn shi" }, { word: "商店", pinyin: "shāng diàn" }, 
-            { word: "上", pinyin: "shàng" }, { word: "少", pinyin: "shǎo" }, { word: "谁", pinyin: "shéi" }, 
-            { word: "什么", pinyin: "shén me" }, { word: "时候", pinyin: "shí hou" }, { word: "是", pinyin: "shì" }, 
-            { word: "书", pinyin: "shū" }, { word: "水", pinyin: "shuǐ" }, { word: "水果", pinyin: "shuǐ guǒ" }, 
-            { word: "睡觉", pinyin: "shuì jiào" }, { word: "说话", pinyin: "shuō huà" }, { word: "岁", pinyin: "suì" }, 
-            { word: "他", pinyin: "tā" }, { word: "她", pinyin: "tā" }, { word: "太", pinyin: "tài" }, 
-            { word: "天气", pinyin: "tiān qì" }, { word: "听", pinyin: "tīng" }, { word: "同学", pinyin: "tóng xué" }, 
-            { word: "我", pinyin: "wǒ" }, { word: "我们", pinyin: "wǒ men" }, { word: "喜欢", pinyin: "xǐ huan" }, 
-            { word: "下", pinyin: "xià" }, { word: "下午", pinyin: "xià wǔ" }, { word: "下雨", pinyin: "xià yǔ" }, 
-            { word: "先生", pinyin: "xiān sheng" }, { word: "现在", pinyin: "xiàn zài" }, { word: "想", pinyin: "xiǎng" }, 
-            { word: "小", pinyin: "xiǎo" }, { word: "些", pinyin: "xiē" }, { word: "写", pinyin: "xiě" }, 
-            { word: "谢谢", pinyin: "xiè xie" }, { word: "星期", pinyin: "xīng qī" }, { word: "学生", pinyin: "xué sheng" }, 
-            { word: "学习", pinyin: "xué xí" }, { word: "学校", pinyin: "xué xiào" }, { word: "一点儿", pinyin: "yì diǎnr" }, 
-            { word: "医生", pinyin: "yī shēng" }, { word: "医院", pinyin: "yī yuàn" }, { word: "衣服", pinyin: "yī fu" }, 
-            { word: "椅子", pinyin: "yǐ zi" }, { word: "有", pinyin: "yǒu" }, { word: "月", pinyin: "yuè" }, 
-            { word: "再见", pinyin: "zài jiàn" }, { word: "在", pinyin: "zài" }, { word: "怎么", pinyin: "zěn me" }, 
-            { word: "怎么样", pinyin: "zěn me yàng" }, { word: "这", pinyin: "zhè" }, { word: "中国", pinyin: "Zhōng guó" }, 
-            { word: "中午", pinyin: "zhōng wǔ" }, { word: "住", pinyin: "zhù" }, { word: "桌子", pinyin: "zhuō zi" }, 
-            { word: "字", pinyin: "zì" }, { word: "昨天", pinyin: "zuó tiān" }, { word: "坐", pinyin: "zuò" }, 
-            { word: "做", pinyin: "zuò" },
-            { word: "吧", pinyin: "ba" }, { word: "白", pinyin: "bái" }, { word: "百", pinyin: "bǎi" }, 
-            { word: "帮助", pinyin: "bāng zhù" }, { word: "报纸", pinyin: "bào zhǐ" }, { word: "比", pinyin: "bǐ" }, 
-            { word: "别", pinyin: "bié" }, { word: "长", pinyin: "cháng" }, { word: "唱歌", pinyin: "chàng gē" }, 
-            { word: "穿", pinyin: "chuān" }, { word: "次", pinyin: "cì" }, { word: "从", pinyin: "cóng" }, 
-            { word: "错", pinyin: "cuò" }, { word: "打篮球", pinyin: "dǎ lán qiú" }, { word: "大家", pinyin: "dà jiā" }, 
-            { word: "到", pinyin: "dào" }, { word: "得", pinyin: "de" }, { word: "等", pinyin: "děng" }, 
-            { word: "弟弟", pinyin: "dì di" }, { word: "第一", pinyin: "dì yī" }, { word: "懂", pinyin: "dǒng" }, 
-            { word: "对", pinyin: "duì" }, { word: "房间", pinyin: "fáng jiān" }, { word: "非常", pinyin: "fēi cháng" }, 
-            { word: "服务员", pinyin: "fú wù yuán" }, { word: "高", pinyin: "gāo" }, { word: "告诉", pinyin: "gào su" }, 
-            { word: "哥哥", pinyin: "gē ge" }, { word: "给", pinyin: "gěi" }, { word: "公共汽车", pinyin: "gōng gòng qì chē" }, 
-            { word: "公司", pinyin: "gōng sī" }, { word: "狗", pinyin: "gǒu" }, { word: "贵", pinyin: "guì" }, 
-            { word: "过", pinyin: "guo" }, { word: "还", pinyin: "hái" }, { word: "孩子", pinyin: "hái zi" }, 
-            { word: "好吃", pinyin: "hǎo chī" }, { word: "黑", pinyin: "hēi" }, { word: "红", pinyin: "hóng" }, 
-            { word: "欢迎", pinyin: "huān yíng" }, { word: "回答", pinyin: "huí dá" }, { word: "件", pinyin: "jiàn" }, 
-            { word: "教室", pinyin: "jiào shì" }, { word: "姐姐", pinyin: "jiě jie" }, { word: "介绍", pinyin: "jiè shào" }, 
-            { word: "近", pinyin: "jìn" }, { word: "进", pinyin: "jìn" }, { word: "就", pinyin: "jiù" }, 
-            { word: "觉得", pinyin: "jué de" }, { word: "咖啡", pinyin: "kā fēi" }, { word: "开始", pinyin: "kāi shǐ" }, 
-            { word: "考试", pinyin: "kǎo shì" }, { word: "可能", pinyin: "kě néng" }, { word: "可以", pinyin: "kě yǐ" }, 
-            { word: "课", pinyin: "kè" }, { word: "快", pinyin: "kuài" }, { word: "快乐", pinyin: "kuài lè" }, 
-            { word: "累", pinyin: "lèi" }, { word: "离", pinyin: "lí" }, { word: "两", pinyin: "liǎng" }, 
-            { word: "旅游", pinyin: "lǚ yóu" }, { word: "卖", pinyin: "mài" }, { word: "慢", pinyin: "màn" }, 
-            { word: "忙", pinyin: "máng" }, { word: "妹妹", pinyin: "mèi mei" }, { word: "门", pinyin: "mén" }, 
-            { word: "面条", pinyin: "miàn tiáo" }, { word: "男", pinyin: "nán" }, { word: "您", pinyin: "nín" }, 
-            { word: "牛奶", pinyin: "niú nǎi" }, { word: "女", pinyin: "nǚ" }, { word: "旁边", pinyin: "páng biān" }, 
-            { word: "跑步", pinyin: "pǎo bù" }, { word: "便宜", pinyin: "pián yi" }, { word: "票", pinyin: "piào" }, 
-            { word: "妻子", pinyin: "qī zi" }, { word: "起床", pinyin: "qǐ chuáng" }, { word: "千", pinyin: "qiān" }, 
-            { word: "铅笔", pinyin: "qiān bǐ" }, { word: "晴", pinyin: "qíng" }, { word: "去年", pinyin: "qù nián" }, 
-            { word: "让", pinyin: "ràng" }, { word: "日", pinyin: "rì" }, { word: "上班", pinyin: "shàng bān" }, 
-            { word: "身体", pinyin: "shēn tǐ" }, { word: "生病", pinyin: "shēng bìng" }, { word: "生日", pinyin: "shēng rì" }, 
-            { word: "时间", pinyin: "shí jiān" }, { word: "事情", pinyin: "shì qing" }, { word: "手表", pinyin: "shǒu biǎo" }, 
-            { word: "手机", pinyin: "shǒu jī" }, { word: "送", pinyin: "sòng" }, { word: "虽然", pinyin: "suī rán" }, 
-            { word: "但是", pinyin: "dàn shì" }, { word: "它", pinyin: "tā" }, { word: "踢足球", pinyin: "tī zú qiú" }, 
-            { word: "题", pinyin: "tí" }, { word: "跳舞", pinyin: "tiào wǔ" }, { word: "外", pinyin: "wài" }, 
-            { word: "完", pinyin: "wán" }, { word: "玩", pinyin: "wán" }, { word: "晚上", pinyin: "wǎn shang" }, 
-            { word: "为什么", pinyin: "wèi shén me" }, { word: "问", pinyin: "wèn" }, { word: "问题", pinyin: "wèn tí" }, 
-            { word: "希望", pinyin: "xī wàng" }, { word: "洗", pinyin: "xǐ" }, { word: "笑", pinyin: "xiào" }, 
-            { word: "新", pinyin: "xīn" }, { word: "休息", pinyin: "xiū xi" }, { word: "雪", pinyin: "xuě" }, 
-            { word: "颜色", pinyin: "yán sè" }, { word: "眼睛", pinyin: "yǎn jing" }, { word: "羊肉", pinyin: "yáng ròu" }, 
-            { word: "药", pinyin: "yào" }, { word: "要", pinyin: "yào" }, { word: "也", pinyin: "yě" }, 
-            { word: "一下", pinyin: "yí xià" }, { word: "一起", pinyin: "yì qǐ" }, { word: "已经", pinyin: "yǐ jīng" }, 
-            { word: "意思", pinyin: "yì si" }, { word: "因为", pinyin: "yīn wèi" }, { word: "所以", pinyin: "suǒ yǐ" }, 
-            { word: "阴", pinyin: "yīn" }, { word: "游泳", pinyin: "yóu yǒng" }, { word: "右边", pinyin: "yòu biān" }, 
-            { word: "鱼", pinyin: "yú" }, { word: "远", pinyin: "yuǎn" }, { word: "运动", pinyin: "yùn dòng" }, 
-            { word: "再", pinyin: "zài" }, { word: "早上", pinyin: "zǎo shang" }, { word: "丈夫", pinyin: "zhàng fu" }, 
-            { word: "找", pinyin: "zhǎo" }, { word: "着", pinyin: "zhe" }, { word: "真", pinyin: "zhēn" }, 
-            { word: "正在", pinyin: "zhèng zài" }, { word: "知道", pinyin: "zhī dào" }, { word: "准备", pinyin: "zhǔn bèi" }, 
-            { word: "自行车", pinyin: "zì xíng chē" }, { word: "走", pinyin: "zǒu" }, { word: "最", pinyin: "zuì" }, 
-            { word: "左边", pinyin: "zuǒ biān" }
-        ];
-
-        // ================= 组件 =================
+        // 引入空安全检查的 Icon
+        function Icon({ name, size = 24, className = '' }) {
+            const spanRef = React.useRef(null);
+            React.useEffect(() => {
+                if (spanRef.current && window.lucide && window.lucide.createIcons) {
+                    spanRef.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
+                    window.lucide.createIcons({ root: spanRef.current });
+                }
+            }, [name, size, className]);
+            return <span ref={spanRef} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }}></span>;
+        }
 
         function App() {
             const [currentTab, setCurrentTab] = useState('home');
             const [studentName, setStudentName] = useState('');
-            
-            // 确保在组件挂载后重新初始化 Lucide 图标
-            useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            }, [currentTab]);
+            const [currentLevel, setCurrentLevel] = useState('hsk1');
 
             const renderContent = () => {
                 switch(currentTab) {
                     case 'home':
-                        return <HomeView studentName={studentName} setStudentName={setStudentName} setTab={setCurrentTab} />;
+                        return <HomeView studentName={studentName} setStudentName={setStudentName} setTab={setCurrentTab} currentLevel={currentLevel} setCurrentLevel={setCurrentLevel} />;
                     case 'part1':
-                        return <Part1View studentName={studentName} />;
+                        return <Part1View studentName={studentName} currentLevel={currentLevel} />;
                     case 'part2':
-                        return <Part2View studentName={studentName} />;
+                        return <Part2View studentName={studentName} currentLevel={currentLevel} />;
                     case 'part3':
-                        return <Part3View studentName={studentName} />;
+                        return <Part3View studentName={studentName} currentLevel={currentLevel} />;
                     default:
-                        return <HomeView studentName={studentName} setStudentName={setStudentName} setTab={setCurrentTab} />;
+                        return <HomeView studentName={studentName} setStudentName={setStudentName} setTab={setCurrentTab} currentLevel={currentLevel} setCurrentLevel={setCurrentLevel} />;
                 }
             };
 
             return (
                 <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
-                    <nav className="w-full md:w-72 bg-indigo-700 text-white flex flex-col shadow-xl">
+                    <nav className="w-full md:w-72 bg-indigo-700 text-white flex flex-col shadow-xl z-10">
                         <div className="p-6">
                             <h1 className="text-2xl font-bold tracking-wider mb-2">汉语比赛系统</h1>
                             <p className="text-indigo-200 text-xs leading-relaxed">Xitoy tili musobaqasi tizimi<br/>Система соревнований по китайскому языку</p>
+                            <div className="mt-4 bg-indigo-800/80 px-3 py-1.5 rounded-lg text-center text-sm font-bold border border-indigo-400/30">
+                                Daraja / Уровень: <span className="text-white text-base">{COMPETITION_DATA[currentLevel].level}</span>
+                            </div>
                         </div>
                         
-                        <div className="flex-1 px-4 space-y-2 overflow-y-auto">
-                            <NavItem icon="home" label="首页 (Bosh sahifa / Главная)" active={currentTab === 'home'} onClick={() => setCurrentTab('home')} />
-                            <NavItem icon="mic" label="第一部分：演讲 (Nutq / Выступление)" active={currentTab === 'part1'} onClick={() => setCurrentTab('part1')} />
-                            <NavItem icon="help-circle" label="第二部分：问答 (Savol-javob / Вопросы)" active={currentTab === 'part2'} onClick={() => setCurrentTab('part2')} />
-                            <NavItem icon="book-a" label="第三部分：认读 (O'qish / Чтение)" active={currentTab === 'part3'} onClick={() => setCurrentTab('part3')} />
+                        <div className="flex-1 px-4 space-y-2 mt-4">
+                            <NavItem icon="home" label="Asosiy (Главная)" active={currentTab === 'home'} onClick={() => setCurrentTab('home')} />
+                            <NavItem icon="mic" label="1-qism: Nutq (Часть 1: Речь)" active={currentTab === 'part1'} onClick={() => setCurrentTab('part1')} />
+                            <NavItem icon="help-circle" label="2-qism: Savollar (Часть 2: Вопросы)" active={currentTab === 'part2'} onClick={() => setCurrentTab('part2')} />
+                            <NavItem icon="book-a" label="3-qism: O'qish (Часть 3: Чтение)" active={currentTab === 'part3'} onClick={() => setCurrentTab('part3')} />
                         </div>
                         
                         {studentName && (
                             <div className="p-4 m-4 bg-indigo-800 rounded-lg flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-xl">
+                                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-xl uppercase">
                                     {studentName.charAt(0)}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="text-[10px] text-indigo-300">当前考生 (Joriy ishtirokchi / Участник)</p>
-                                    <p className="font-semibold truncate">{studentName}</p>
+                                    <p className="text-xs text-indigo-300">Ishtirokchi / Участник</p>
+                                    <p className="font-semibold truncate text-white">{studentName}</p>
                                 </div>
                             </div>
                         )}
@@ -310,41 +466,68 @@
             );
         }
 
-        function HomeView({ studentName, setStudentName, setTab }) {
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, []);
+        function HomeView({ studentName, setStudentName, setTab, currentLevel, setCurrentLevel }) {
+            const levels = [
+                { id: 'hsk1', label: 'HSK 1' },
+                { id: 'hsk2', label: 'HSK 2' },
+                { id: 'hsk3', label: 'HSK 3' },
+                { id: 'hsk4', label: 'HSK 4' },
+                { id: 'hsk5', label: 'HSK 5' }
+            ];
 
             return (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 text-center animate-fade-in">
                     <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Icon name="user" size={40} />
                     </div>
-                    <h2 className="text-3xl font-bold mb-3">欢迎来到汉语比赛系统</h2>
-                    <p className="text-slate-500 mb-2">Xitoy tili musobaqasi tizimiga xush kelibsiz</p>
-                    <p className="text-slate-500 mb-10">Добро пожаловать в систему соревнований по китайскому языку</p>
+                    <h2 className="text-3xl font-bold mb-3 text-slate-800">欢迎来到汉语比赛系统</h2>
+                    <p className="text-slate-500 mb-2 font-medium">Xitoy tili musobaqasi tizimiga xush kelibsiz</p>
+                    <p className="text-slate-500 mb-10 font-medium">Добро пожаловать в систему соревнований по китайскому языку</p>
 
-                    <div className="max-w-lg mx-auto bg-slate-50 p-6 rounded-xl border border-slate-100">
-                        <label className="block text-left text-sm font-semibold text-slate-700 mb-2">
-                            请输入考生姓名 (Ishtirokchi ismini kiriting / Введите имя участника)
-                        </label>
-                        <input 
-                            type="text" 
-                            value={studentName}
-                            onChange={(e) => setStudentName(e.target.value)}
-                            placeholder="例如：张三 / Masalan: Ali / Например: Иван"
-                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-lg mb-6"
-                        />
+                    <div className="max-w-lg mx-auto bg-slate-50 p-6 rounded-xl border border-slate-100 shadow-inner">
+                        <div className="mb-6">
+                            <label className="block text-left text-sm font-semibold text-slate-700 mb-3">
+                                1. 请选择比赛级别<br/><span className="text-xs text-slate-500 font-normal">Darajani tanlang / Выберите уровень</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {levels.map(lvl => (
+                                    <button 
+                                        key={lvl.id}
+                                        onClick={() => setCurrentLevel(lvl.id)}
+                                        className={`flex-1 py-2 rounded-lg font-bold border transition-all ${
+                                            currentLevel === lvl.id 
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+                                                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        {lvl.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <label className="block text-left text-sm font-semibold text-slate-700 mb-3">
+                                2. 请输入考生姓名<br/><span className="text-xs text-slate-500 font-normal">Ishtirokchi ismini kiriting / Введите имя участника</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                value={studentName}
+                                onChange={(e) => setStudentName(e.target.value)}
+                                placeholder="Masalan: Aziza / Например: Азиза"
+                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-lg"
+                            />
+                        </div>
                         
                         <div className="grid grid-cols-1 gap-3">
                             <button onClick={() => setTab('part1')} className="btn-primary flex items-center justify-center">
-                                <Icon name="mic" size={18} className="mr-2" /> 开始 第一部分 (1-qismni boshlash / Начать часть 1)
+                                <Icon name="mic" size={18} className="mr-2" /> Boshlash 1-qism (Начать Часть 1)
                             </button>
                             <button onClick={() => setTab('part2')} className="btn-secondary flex items-center justify-center">
-                                <Icon name="help-circle" size={18} className="mr-2" /> 开始 第二部分 (2-qismni boshlash / Начать часть 2)
+                                <Icon name="help-circle" size={18} className="mr-2" /> Boshlash 2-qism (Начать Часть 2)
                             </button>
                             <button onClick={() => setTab('part3')} className="btn-secondary flex items-center justify-center">
-                                <Icon name="book-a" size={18} className="mr-2" /> 开始 第三部分 (3-qismni boshlash / Начать часть 3)
+                                <Icon name="book-a" size={18} className="mr-2" /> Boshlash 3-qism (Начать Часть 3)
                             </button>
                         </div>
                     </div>
@@ -352,53 +535,125 @@
             );
         }
 
-        function Part1View({ studentName }) {
+        function SectionHeader({ title, description, studentName }) {
+            return (
+                <div className="mb-8 border-b border-slate-200 pb-6">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">{title}</h2>
+                            <p className="text-slate-500 text-sm md:text-base">{description}</p>
+                        </div>
+                        {studentName && (
+                            <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-semibold border border-indigo-100 whitespace-nowrap">
+                                Ishtirokchi / Участник: <span className="text-lg">{studentName}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function Part1View({ studentName, currentLevel }) {
+            const currentTopics = COMPETITION_DATA[currentLevel].topics;
+
             return (
                 <div className="animate-fade-in">
                     <SectionHeader 
-                        title="第一部分：命题演讲 (Mavzuli nutq / Выступление)" 
-                        description="请考生从以下三个题目中选择一个进行演讲。 (Ishtirokchi quyidagi 3 ta mavzudan birini tanlashi kerak / Выберите одну из 3 тем)" 
+                        title={`第一部分：命题演讲 (${COMPETITION_DATA[currentLevel].level})`} 
+                        description="Ishtirokchi quyidagi mavzudan birini tanlashi kerak / Выберите одну тему" 
                         studentName={studentName} 
                     />
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        {TOPICS.map((topic, index) => (
-                            <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-indigo-100 text-indigo-700 font-bold rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {currentTopics.map((topic, index) => (
+                            <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center hover:shadow-md transition-shadow flex flex-col items-center justify-center min-h-[160px]">
+                                <div className="w-10 h-10 bg-indigo-100 text-indigo-700 font-bold rounded-full flex items-center justify-center mx-auto mb-4 text-lg">
                                     {index + 1}
                                 </div>
-                                <h3 className="text-2xl font-bold text-slate-800">{topic}</h3>
+                                <h3 className="text-lg md:text-xl font-bold text-slate-800 whitespace-pre-wrap">{topic}</h3>
                             </div>
                         ))}
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col items-center">
-                        <h3 className="text-lg font-semibold text-slate-600 mb-4">演讲计时器 (Taymer / Таймер)</h3>
+                        <h3 className="text-lg font-semibold text-slate-600 mb-4">Vaqt (Таймер) - 1 Daqiqa / 1 Минута</h3>
                         <Timer />
                     </div>
                 </div>
             );
         }
 
-        function Part2View({ studentName }) {
+        function Timer() {
+            const [time, setTime] = useState(60); 
+            const [isRunning, setIsRunning] = useState(false);
+            const intervalRef = useRef(null);
+
+            useEffect(() => {
+                if (isRunning && time > 0) {
+                    intervalRef.current = setInterval(() => setTime((prevTime) => prevTime - 1), 1000);
+                } else if (time === 0) {
+                    setIsRunning(false);
+                    clearInterval(intervalRef.current);
+                } else {
+                    clearInterval(intervalRef.current);
+                }
+                return () => clearInterval(intervalRef.current);
+            }, [isRunning, time]);
+
+            const toggleTimer = () => setIsRunning(!isRunning);
+            const resetTimer = () => { setIsRunning(false); setTime(60); };
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+
+            let textColorClass = "text-slate-800";
+            if (time === 0) textColorClass = "text-rose-600";
+            else if (time <= 10) textColorClass = "text-amber-500";
+
+            return (
+                <div className="flex flex-col items-center">
+                    <div className={`text-7xl font-mono font-bold mb-8 tracking-wider bg-slate-50 px-8 py-4 rounded-2xl border border-slate-200 transition-colors duration-300 ${textColorClass}`}>
+                        {formatTime(time)}
+                    </div>
+                    <div className="flex space-x-4">
+                        <button 
+                            onClick={toggleTimer} 
+                            disabled={time === 0}
+                            className={`flex items-center px-6 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                isRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'
+                            }`}
+                        >
+                            {isRunning ? <><Icon name="square" size={20} className="mr-2"/> To'xtatish (Пауза)</> : <><Icon name="play" size={20} className="mr-2"/> Boshlash (Старт)</>}
+                        </button>
+                        <button 
+                            onClick={resetTimer} 
+                            className="flex items-center px-6 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all"
+                        >
+                            <Icon name="rotate-ccw" size={20} className="mr-2"/> Qayta o'rnatish (Сброс)
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function Part2View({ studentName, currentLevel }) {
             const [drawnQuestions, setDrawnQuestions] = useState([]);
             const [isDrawing, setIsDrawing] = useState(false);
             const [selectedAnswers, setSelectedAnswers] = useState({});
             const [showResults, setShowResults] = useState(false);
 
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [drawnQuestions, isDrawing]);
+            const currentQuestionBank = COMPETITION_DATA[currentLevel].questions;
 
             const drawRandomQuestions = () => {
                 setIsDrawing(true);
                 setDrawnQuestions([]);
                 setSelectedAnswers({});
                 setShowResults(false);
-                
                 setTimeout(() => {
-                    const shuffled = [...QUESTION_BANK].sort(() => 0.5 - Math.random());
-                    setDrawnQuestions(shuffled.slice(0, 6));
+                    const shuffled = [...currentQuestionBank].sort(() => 0.5 - Math.random());
+                    setDrawnQuestions(shuffled.slice(0, Math.min(6, currentQuestionBank.length)));
                     setIsDrawing(false);
                 }, 600);
             };
@@ -411,8 +666,8 @@
             return (
                 <div className="animate-fade-in">
                     <SectionHeader 
-                        title="第二部分：问答题 (Savol-javob / Вопросы и ответы)" 
-                        description="系统总共有50道选择题，请点击下方按钮随机抽取6道题目。(50 ta savol mavjud, 6 ta savol tanlang / В системе 50 вопросов, выберите 6)" 
+                        title={`第二部分：问答题 (${COMPETITION_DATA[currentLevel].level})`} 
+                        description="Savol tanlash uchun tugmani bosing / Нажмите кнопку, чтобы выбрать вопросы" 
                         studentName={studentName} 
                     />
 
@@ -423,7 +678,7 @@
                             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center mx-auto disabled:opacity-50"
                         >
                             <Icon name="refresh-cw" size={24} className={`mr-3 ${isDrawing ? 'animate-spin' : ''}`} />
-                            {drawnQuestions.length > 0 ? "重新抽取6道题 (Qayta tanlash / Выбрать заново)" : "随机抽取6道题 (6 ta savol tanlash / Выбрать 6 вопросов)"}
+                            {drawnQuestions.length > 0 ? "Qayta tanlash (Выбрать снова)" : "Tasodifiy tanlash (Случайный выбор)"}
                         </button>
                     </div>
 
@@ -432,10 +687,13 @@
                             {drawnQuestions.map((q, qIndex) => (
                                 <div key={qIndex} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                                     <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-4 flex items-start">
-                                        <span className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center mr-4 mt-0.5">
+                                        <span className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center mr-4 mt-1">
                                             {qIndex + 1}
                                         </span>
-                                        <h3 className="text-xl font-bold text-slate-800 pt-1">{q.q}</h3>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-800">{q.q}</h3>
+                                            {q.pinyin && <p className="text-indigo-600 font-sans mt-1">{q.pinyin}</p>}
+                                        </div>
                                     </div>
                                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {q.options.map((opt, optIndex) => {
@@ -444,19 +702,12 @@
                                             let btnClass = "text-left px-6 py-4 rounded-xl border-2 transition-all font-medium ";
                                             
                                             if (showResults) {
-                                                if (isCorrect) {
-                                                    btnClass += "bg-emerald-50 border-emerald-500 text-emerald-800";
-                                                } else if (isSelected && !isCorrect) {
-                                                    btnClass += "bg-rose-50 border-rose-500 text-rose-800";
-                                                } else {
-                                                    btnClass += "bg-slate-50 border-slate-200 text-slate-500 opacity-50";
-                                                }
+                                                if (isCorrect) btnClass += "bg-emerald-50 border-emerald-500 text-emerald-800";
+                                                else if (isSelected && !isCorrect) btnClass += "bg-rose-50 border-rose-500 text-rose-800";
+                                                else btnClass += "bg-slate-50 border-slate-200 text-slate-500 opacity-50";
                                             } else {
-                                                if (isSelected) {
-                                                    btnClass += "bg-indigo-50 border-indigo-500 text-indigo-800";
-                                                } else {
-                                                    btnClass += "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-slate-50";
-                                                }
+                                                if (isSelected) btnClass += "bg-indigo-50 border-indigo-500 text-indigo-800";
+                                                else btnClass += "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-slate-50";
                                             }
 
                                             return (
@@ -478,53 +729,41 @@
                                 <div className="flex flex-col items-center mt-8 pb-8">
                                     <button
                                         onClick={() => setShowResults(true)}
-                                        disabled={Object.keys(selectedAnswers).length < 6}
+                                        disabled={Object.keys(selectedAnswers).length < drawnQuestions.length}
                                         className="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        提交并查看结果 (Topshirish va ko'rish / Отправить и посмотреть)
+                                        Natijani ko'rish (Отправить и проверить)
                                     </button>
-                                    {Object.keys(selectedAnswers).length < 6 && (
-                                        <p className="text-sm text-slate-500 mt-3">请回答所有题目后提交 (Barcha savollarga javob bering / Ответьте на все вопросы)</p>
-                                    )}
                                 </div>
                             )}
                             
                             {showResults && (
-                                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center mt-8 mb-8">
-                                    <h3 className="text-2xl font-bold text-slate-800 mb-4">测试结果 (Natijalar / Результаты)</h3>
+                                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center mt-8 mb-8 animate-fade-in">
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-4">Natija (Результат)</h3>
                                     <p className="text-lg text-slate-600 flex items-center justify-center">
-                                        本次得分 (Ball / Балл): <span className="font-bold text-indigo-600 text-4xl mx-3">
+                                        Ball (Баллы): <span className="font-bold text-indigo-600 text-4xl mx-3">
                                             {drawnQuestions.filter((q, i) => selectedAnswers[i] === q.a).length}
-                                        </span> / 6
+                                        </span> / {drawnQuestions.length}
                                     </p>
                                 </div>
                             )}
-                        </div>
-                    )}
-                    
-                    {!isDrawing && drawnQuestions.length === 0 && (
-                        <div className="bg-slate-100 border border-slate-200 border-dashed rounded-2xl p-12 text-center text-slate-400">
-                            点击上方按钮开始抽题 (Boshlash uchun yuqoridagi tugmani bosing / Нажмите кнопку выше для начала)
                         </div>
                     )}
                 </div>
             );
         }
 
-        function Part3View({ studentName }) {
+        function Part3View({ studentName, currentLevel }) {
             const [selectedWords, setSelectedWords] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [showPinyin, setShowPinyin] = useState(false);
             
-            const NUM_WORDS_TO_READ = 15; 
-
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [selectedWords, showPinyin]);
+            const NUM_WORDS_TO_READ = 6; 
+            const currentWordsBank = COMPETITION_DATA[currentLevel].words;
 
             const generateWords = () => {
-                const shuffled = [...HSK_WORDS].sort(() => 0.5 - Math.random());
-                setSelectedWords(shuffled.slice(0, NUM_WORDS_TO_READ));
+                const shuffled = [...currentWordsBank].sort(() => 0.5 - Math.random());
+                setSelectedWords(shuffled.slice(0, Math.min(NUM_WORDS_TO_READ, currentWordsBank.length)));
                 setCurrentIndex(0);
                 setShowPinyin(false);
             };
@@ -546,22 +785,22 @@
             return (
                 <div className="animate-fade-in">
                     <SectionHeader 
-                        title="第三部分：汉字认读 (Iyerogliflarni o'qish / Чтение иероглифов)" 
-                        description="包含HSK1和HSK2词汇。(HSK1 va HSK2 so'zlarini o'z ichiga oladi / Включает лексику HSK1 и HSK2)" 
+                        title={`第三部分：汉字认读 (${COMPETITION_DATA[currentLevel].level})`} 
+                        description="So'zlarni o'qish / Чтение иероглифов" 
                         studentName={studentName} 
                     />
 
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                         <button 
                             onClick={generateWords}
-                            className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center"
+                            className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center w-full sm:w-auto justify-center"
                         >
-                            <Icon name="refresh-cw" size={18} className="mr-2" /> 生成新词组 ({NUM_WORDS_TO_READ} ta so'z / {NUM_WORDS_TO_READ} слов)
+                            <Icon name="refresh-cw" size={18} className="mr-2" /> Yangi so'zlar (Новые слова)
                         </button>
 
                         {selectedWords.length > 0 && (
                             <div className="text-slate-500 font-medium">
-                                进度 (Jarayon / Прогресс): <span className="text-indigo-600 font-bold text-lg">{currentIndex + 1}</span> / {selectedWords.length}
+                                <span className="text-indigo-600 font-bold text-lg">{currentIndex + 1}</span> / {selectedWords.length}
                             </div>
                         )}
                     </div>
@@ -572,19 +811,19 @@
                             <button 
                                 onClick={() => setShowPinyin(!showPinyin)}
                                 className="absolute top-6 right-6 text-slate-400 hover:text-indigo-600 flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200"
-                                title="显示/隐藏拼音 (Pinyin ko'rsatish-yashirish / Показать-скрыть пиньинь)"
+                                title="Pinyin ko'rsatish/yashirish (Показать/Скрыть пиньинь)"
                             >
                                 <Icon name={showPinyin ? "eye-off" : "eye"} size={18} />
-                                <span className="text-sm font-medium">{showPinyin ? "隐藏拼音 (Yashirish / Скрыть)" : "显示拼音 (Ko'rsatish / Показать)"}</span>
+                                <span className="text-sm font-medium hidden sm:inline">{showPinyin ? "Yashirish (Скрыть)" : "Ko'rsatish (Показать)"}</span>
                             </button>
 
-                            <div className="text-center w-full max-w-lg mb-12">
+                            <div className="text-center w-full max-w-lg mb-12 mt-8">
                                 <div className={`h-12 mb-4 transition-opacity duration-300 ${showPinyin ? 'opacity-100' : 'opacity-0'}`}>
-                                    <p className="text-3xl text-slate-500 font-sans tracking-widest">
+                                    <p className="text-3xl md:text-4xl text-slate-500 font-sans tracking-widest">
                                         {selectedWords[currentIndex].pinyin}
                                     </p>
                                 </div>
-                                <h1 className="text-9xl font-bold text-slate-900 tracking-wider">
+                                <h1 className="text-7xl md:text-8xl font-bold text-slate-900 tracking-wider" style={{ wordBreak: 'break-word' }}>
                                     {selectedWords[currentIndex].word}
                                 </h1>
                             </div>
@@ -608,112 +847,15 @@
                         </div>
                     ) : (
                         <div className="bg-slate-100 border border-slate-200 border-dashed rounded-2xl p-16 text-center text-slate-400">
-                            点击上方按钮开始测试 (Boshlash uchun yuqoridagi tugmani bosing / Нажмите кнопку выше для начала)
+                            Boshlash uchun yuqoridagi tugmani bosing<br/>
+                            Нажмите кнопку выше, чтобы начать
                         </div>
                     )}
                 </div>
             );
         }
 
-        function SectionHeader({ title, description, studentName }) {
-            return (
-                <div className="mb-8 border-b border-slate-200 pb-6">
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <h2 className="text-3xl font-bold text-slate-800 mb-2">{title}</h2>
-                            <p className="text-slate-500">{description}</p>
-                        </div>
-                        {studentName && (
-                            <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-semibold border border-indigo-100 text-sm">
-                                当前考生 (Ishtirokchi / Участник)：<br/><span className="text-lg">{studentName}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        function Timer() {
-            const INITIAL_TIME = 60; 
-            const [time, setTime] = useState(INITIAL_TIME);
-            const [isRunning, setIsRunning] = useState(false);
-            const intervalRef = useRef(null);
-
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [isRunning]);
-
-            useEffect(() => {
-                if (isRunning && time > 0) {
-                    intervalRef.current = setInterval(() => {
-                        setTime((prevTime) => {
-                            if (prevTime <= 1) {
-                                clearInterval(intervalRef.current);
-                                setIsRunning(false);
-                                return 0;
-                            }
-                            return prevTime - 1;
-                        });
-                    }, 1000);
-                } else {
-                    clearInterval(intervalRef.current);
-                }
-                return () => clearInterval(intervalRef.current);
-            }, [isRunning, time]);
-
-            const toggleTimer = () => {
-                if (time > 0) {
-                    setIsRunning(!isRunning);
-                }
-            };
-            
-            const resetTimer = () => {
-                setIsRunning(false);
-                setTime(INITIAL_TIME);
-            };
-
-            const formatTime = (seconds) => {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-
-            const timeColorClass = time === 0 
-                ? "text-rose-600 bg-rose-50 border-rose-200" 
-                : time <= 10 
-                    ? "text-amber-500 bg-amber-50 border-amber-200" 
-                    : "text-slate-800 bg-slate-50 border-slate-200";
-
-            return (
-                <div className="flex flex-col items-center">
-                    <div className={`text-7xl font-mono font-bold mb-8 tracking-wider px-8 py-4 rounded-2xl border transition-colors duration-300 ${timeColorClass}`}>
-                        {formatTime(time)}
-                    </div>
-                    <div className="flex space-x-4">
-                        <button 
-                            onClick={toggleTimer} 
-                            disabled={time === 0}
-                            className={`flex items-center px-6 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                                isRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'
-                            }`}
-                        >
-                            {isRunning 
-                                ? <><Icon name="square" size={20} className="mr-2"/> 暂停 (To'xtatish / Пауза)</> 
-                                : <><Icon name="play" size={20} className="mr-2"/> 开始 (Boshlash / Старт)</>
-                            }
-                        </button>
-                        <button 
-                            onClick={resetTimer} 
-                            className="flex items-center px-6 py-3 rounded-xl font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all"
-                        >
-                            <Icon name="rotate-ccw" size={20} className="mr-2"/> 重置 (Qayta o'rnatish / Сброс)
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
+        const root = window.ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
