@@ -479,8 +479,17 @@
 
             return (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 text-center animate-fade-in">
-                    <div className="w-20 h-20 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Icon name="user" size={40} />
+                    <div className="mx-auto mb-8 flex items-center justify-center h-28">
+                        <img 
+                            src="微信图片_20260622145520_188_173.jpg" 
+                            alt="NSRE Logo" 
+                            className="max-h-full max-w-full object-contain"
+                            onError={(e) => { 
+                                e.target.onerror = null; 
+                                e.target.src = 'https://via.placeholder.com/300x120?text=NSRE+Logo'; 
+                                e.target.alt = 'Logo加载失败，请确保图片与html文件在同一目录';
+                            }}
+                        />
                     </div>
                     <h2 className="text-3xl font-bold mb-3 text-slate-800">欢迎来到汉语比赛系统</h2>
                     <p className="text-slate-500 mb-2 font-medium">Xitoy tili musobaqasi tizimiga xush kelibsiz</p>
