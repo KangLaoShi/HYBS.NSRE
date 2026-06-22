@@ -13,8 +13,8 @@
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
 
     <style>
-        .btn-primary { background-color: #4f46e5; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #4338ca; }
+        .btn-primary { background-color: #0891b2; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #0e7490; }
         .btn-secondary { background-color: #f1f5f9; color: #475569; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; border: 1px solid #e2e8f0; }
         .btn-secondary:hover { background-color: #e2e8f0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -38,7 +38,7 @@
             { q: "4. 你家有几口人？", pinyin: "Nǐ jiā yǒu jǐ kǒu rén?", options: ["A. 我家很大 (Wǒ jiā hěn dà)", "B. 三个苹果 (Sān ge píngguǒ)", "C. 四口人 (Sì kǒu rén)", "D. 老师 (Lǎoshī)"], a: 2 },
             { q: "5. 你爸爸做什么工作？", pinyin: "Nǐ bàba zuò shénme gōngzuò?", options: ["A. 他是医生 (Tā shì yīshēng)", "B. 看书 (Kànshū)", "C. 喝茶 (Hēchá)", "D. 五十岁 (Wǔshí suì)"], a: 0 },
             { q: "6. 你喜欢吃什么中国菜？", pinyin: "Nǐ xǐhuan chī shénme Zhōngguó cài?", options: ["A. 看电影 (Kàn diànyǐng)", "B. 吃包子 (Chī bāozi)", "C. 中国人 (Zhōngguórén)", "D. 很好 (Hěn hǎo)"], a: 1 },
-            { q: "7. 你明天要做什么？", pinyin: "Nǐ míngtiān yǒu shénme jìhuà?", options: ["A. 昨天去了 (Zuótiān qù le)", "B. 去学校 (Qù xuéxiào)", "C. 很大 (Hěn dà)", "D. 天气好 (Tiānqì hǎo)"], a: 1 },
+            { q: "7. 你明天有什么计划？", pinyin: "Nǐ míngtiān yǒu shénme jìhuà?", options: ["A. 昨天去了 (Zuótiān qù le)", "B. 去学校 (Qù xuéxiào)", "C. 很大 (Hěn dà)", "D. 天气好 (Tiānqì hǎo)"], a: 1 },
             { q: "8. 现在几点了？", pinyin: "Xiànzài jǐ diǎn le?", options: ["A. 下午两点 (Xiàwǔ liǎng diǎn)", "B. 今天 (Jīntiān)", "C. 没有表 (Méiyǒu biǎo)", "D. 明天见 (Míngtiān jiàn)"], a: 0 },
             { q: "9. 这是什么？", pinyin: "Zhè shì shénme?", options: ["A. 那是我的 (Nà shì wǒ de)", "B. 这是一本书 (Zhè shì yì běn shū)", "C. 他不在 (Tā bú zài)", "D. 三个 (Sān ge)"], a: 1 },
             { q: "10. 那是谁？", pinyin: "Nà shì shéi?", options: ["A. 那是我的朋友 (Nà shì wǒ de péngyou)", "B. 这是苹果 (Zhè shì píngguǒ)", "C. 不客气 (Bú kèqi)", "D. 昨天 (Zuótiān)"], a: 0 },
@@ -412,11 +412,12 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
-                    <nav className="w-full md:w-72 bg-indigo-700 text-white flex flex-col shadow-xl z-10">
+                    {/* 侧边导航栏 */}
+                    <nav className="w-full md:w-72 bg-cyan-600 text-white flex flex-col shadow-xl z-10">
                         <div className="p-6">
                             <h1 className="text-2xl font-bold tracking-wider mb-2">汉语比赛系统</h1>
-                            <p className="text-indigo-200 text-xs leading-relaxed">Xitoy tili musobaqasi tizimi<br/>Система соревнований по китайскому языку</p>
-                            <div className="mt-4 bg-indigo-800/80 px-3 py-1.5 rounded-lg text-center text-sm font-bold border border-indigo-400/30">
+                            <p className="text-cyan-100 text-xs leading-relaxed">Xitoy tili musobaqasi tizimi<br/>Система соревнований по китайскому языку</p>
+                            <div className="mt-4 bg-cyan-700/60 px-3 py-1.5 rounded-lg text-center text-sm font-bold border border-cyan-500/30">
                                 Daraja / Уровень: <span className="text-white text-base">{COMPETITION_DATA[currentLevel].level}</span>
                             </div>
                         </div>
@@ -429,18 +430,19 @@
                         </div>
                         
                         {studentName && (
-                            <div className="p-4 m-4 bg-indigo-800 rounded-lg flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-xl uppercase">
+                            <div className="p-4 m-4 bg-cyan-700 rounded-lg flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center font-bold text-xl uppercase text-cyan-800">
                                     {studentName.charAt(0)}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="text-xs text-indigo-300">Ishtirokchi / Участник</p>
+                                    <p className="text-xs text-cyan-200">Ishtirokchi / Участник</p>
                                     <p className="font-semibold truncate text-white">{studentName}</p>
                                 </div>
                             </div>
                         )}
                     </nav>
 
+                    {/* 主内容区 */}
                     <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                         <div className="max-w-5xl mx-auto">
                             {renderContent()}
@@ -455,10 +457,10 @@
                 <button
                     onClick={onClick}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                        active ? 'bg-white text-indigo-700 shadow-md font-bold' : 'hover:bg-indigo-600 text-indigo-50'
+                        active ? 'bg-white text-cyan-700 shadow-md font-bold' : 'hover:bg-cyan-500 text-cyan-50'
                     }`}
                 >
-                    <span className={active ? 'text-indigo-700' : 'text-indigo-300'}>
+                    <span className={active ? 'text-cyan-600' : 'text-cyan-200'}>
                         <Icon name={icon} size={20} />
                     </span>
                     <span className="text-sm">{label}</span>
@@ -477,7 +479,7 @@
 
             return (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 text-center animate-fade-in">
-                    <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Icon name="user" size={40} />
                     </div>
                     <h2 className="text-3xl font-bold mb-3 text-slate-800">欢迎来到汉语比赛系统</h2>
@@ -496,7 +498,7 @@
                                         onClick={() => setCurrentLevel(lvl.id)}
                                         className={`flex-1 py-2 rounded-lg font-bold border transition-all ${
                                             currentLevel === lvl.id 
-                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+                                                ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' 
                                                 : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
                                         }`}
                                     >
@@ -506,6 +508,7 @@
                             </div>
                         </div>
 
+                        {/* 考生姓名输入 */}
                         <div className="mb-8">
                             <label className="block text-left text-sm font-semibold text-slate-700 mb-3">
                                 2. 请输入考生姓名<br/><span className="text-xs text-slate-500 font-normal">Ishtirokchi ismini kiriting / Введите имя участника</span>
@@ -515,7 +518,7 @@
                                 value={studentName}
                                 onChange={(e) => setStudentName(e.target.value)}
                                 placeholder="Masalan: Aziza / Например: Азиза"
-                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-lg"
+                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all text-lg"
                             />
                         </div>
                         
@@ -544,7 +547,7 @@
                             <p className="text-slate-500 text-sm md:text-base">{description}</p>
                         </div>
                         {studentName && (
-                            <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-semibold border border-indigo-100 whitespace-nowrap">
+                            <div className="bg-cyan-50 text-cyan-700 px-4 py-2 rounded-lg font-semibold border border-cyan-100 whitespace-nowrap">
                                 Ishtirokchi / Участник: <span className="text-lg">{studentName}</span>
                             </div>
                         )}
@@ -564,13 +567,13 @@
                         studentName={studentName} 
                     />
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         {currentTopics.map((topic, index) => (
-                            <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center hover:shadow-md transition-shadow flex flex-col items-center justify-center min-h-[160px]">
-                                <div className="w-10 h-10 bg-indigo-100 text-indigo-700 font-bold rounded-full flex items-center justify-center mx-auto mb-4 text-lg">
+                            <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-cyan-100 text-cyan-700 font-bold rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
                                     {index + 1}
                                 </div>
-                                <h3 className="text-lg md:text-xl font-bold text-slate-800 whitespace-pre-wrap">{topic}</h3>
+                                <h3 className="text-xl md:text-2xl font-bold text-slate-800 whitespace-pre-wrap">{topic}</h3>
                             </div>
                         ))}
                     </div>
@@ -622,7 +625,7 @@
                             onClick={toggleTimer} 
                             disabled={time === 0}
                             className={`flex items-center px-6 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                                isRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'
+                                isRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-cyan-500 hover:bg-cyan-600'
                             }`}
                         >
                             {isRunning ? <><Icon name="square" size={20} className="mr-2"/> To'xtatish (Пауза)</> : <><Icon name="play" size={20} className="mr-2"/> Boshlash (Старт)</>}
@@ -675,7 +678,7 @@
                         <button 
                             onClick={drawRandomQuestions}
                             disabled={isDrawing}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center mx-auto disabled:opacity-50"
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center mx-auto disabled:opacity-50"
                         >
                             <Icon name="refresh-cw" size={24} className={`mr-3 ${isDrawing ? 'animate-spin' : ''}`} />
                             {drawnQuestions.length > 0 ? "Qayta tanlash (Выбрать снова)" : "Tasodifiy tanlash (Случайный выбор)"}
@@ -686,13 +689,13 @@
                         <div className="space-y-6">
                             {drawnQuestions.map((q, qIndex) => (
                                 <div key={qIndex} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                    <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-4 flex items-start">
-                                        <span className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center mr-4 mt-1">
+                                    <div className="bg-cyan-50 border-b border-cyan-100 px-6 py-4 flex items-start">
+                                        <span className="flex-shrink-0 w-8 h-8 bg-cyan-600 text-white font-bold rounded-full flex items-center justify-center mr-4 mt-1">
                                             {qIndex + 1}
                                         </span>
                                         <div>
                                             <h3 className="text-xl font-bold text-slate-800">{q.q}</h3>
-                                            {q.pinyin && <p className="text-indigo-600 font-sans mt-1">{q.pinyin}</p>}
+                                            {q.pinyin && <p className="text-cyan-600 font-sans mt-1">{q.pinyin}</p>}
                                         </div>
                                     </div>
                                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -702,12 +705,19 @@
                                             let btnClass = "text-left px-6 py-4 rounded-xl border-2 transition-all font-medium ";
                                             
                                             if (showResults) {
-                                                if (isCorrect) btnClass += "bg-emerald-50 border-emerald-500 text-emerald-800";
-                                                else if (isSelected && !isCorrect) btnClass += "bg-rose-50 border-rose-500 text-rose-800";
-                                                else btnClass += "bg-slate-50 border-slate-200 text-slate-500 opacity-50";
+                                                if (isCorrect) {
+                                                    btnClass += "bg-green-100 border-green-500 text-green-800 shadow-sm";
+                                                } else if (isSelected && !isCorrect) {
+                                                    btnClass += "bg-rose-50 border-rose-500 text-rose-800";
+                                                } else {
+                                                    btnClass += "bg-slate-50 border-slate-200 text-slate-500 opacity-50";
+                                                }
                                             } else {
-                                                if (isSelected) btnClass += "bg-indigo-50 border-indigo-500 text-indigo-800";
-                                                else btnClass += "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-slate-50";
+                                                if (isSelected) {
+                                                    btnClass += "bg-cyan-50 border-cyan-500 text-cyan-800";
+                                                } else {
+                                                    btnClass += "bg-white border-slate-200 text-slate-700 hover:border-cyan-300 hover:bg-slate-50";
+                                                }
                                             }
 
                                             return (
@@ -730,7 +740,7 @@
                                     <button
                                         onClick={() => setShowResults(true)}
                                         disabled={Object.keys(selectedAnswers).length < drawnQuestions.length}
-                                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-cyan-600 hover:bg-cyan-700 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Natijani ko'rish (Отправить и проверить)
                                     </button>
@@ -741,7 +751,7 @@
                                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center mt-8 mb-8 animate-fade-in">
                                     <h3 className="text-2xl font-bold text-slate-800 mb-4">Natija (Результат)</h3>
                                     <p className="text-lg text-slate-600 flex items-center justify-center">
-                                        Ball (Баллы): <span className="font-bold text-indigo-600 text-4xl mx-3">
+                                        Ball (Баллы): <span className="font-bold text-cyan-600 text-4xl mx-3">
                                             {drawnQuestions.filter((q, i) => selectedAnswers[i] === q.a).length}
                                         </span> / {drawnQuestions.length}
                                     </p>
@@ -793,14 +803,14 @@
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                         <button 
                             onClick={generateWords}
-                            className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center w-full sm:w-auto justify-center"
+                            className="bg-cyan-100 text-cyan-800 hover:bg-cyan-200 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center w-full sm:w-auto justify-center"
                         >
                             <Icon name="refresh-cw" size={18} className="mr-2" /> Yangi so'zlar (Новые слова)
                         </button>
 
                         {selectedWords.length > 0 && (
                             <div className="text-slate-500 font-medium">
-                                <span className="text-indigo-600 font-bold text-lg">{currentIndex + 1}</span> / {selectedWords.length}
+                                <span className="text-cyan-600 font-bold text-lg">{currentIndex + 1}</span> / {selectedWords.length}
                             </div>
                         )}
                     </div>
@@ -808,38 +818,41 @@
                     {selectedWords.length > 0 ? (
                         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col items-center min-h-[400px] justify-center relative">
                             
+                            {/* 拼音开关 */}
                             <button 
                                 onClick={() => setShowPinyin(!showPinyin)}
-                                className="absolute top-6 right-6 text-slate-400 hover:text-indigo-600 flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200"
+                                className="absolute top-6 right-6 text-slate-400 hover:text-cyan-600 flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200"
                                 title="Pinyin ko'rsatish/yashirish (Показать/Скрыть пиньинь)"
                             >
                                 <Icon name={showPinyin ? "eye-off" : "eye"} size={18} />
                                 <span className="text-sm font-medium hidden sm:inline">{showPinyin ? "Yashirish (Скрыть)" : "Ko'rsatish (Показать)"}</span>
                             </button>
 
+                            {/* 闪卡内容 */}
                             <div className="text-center w-full max-w-lg mb-12 mt-8">
                                 <div className={`h-12 mb-4 transition-opacity duration-300 ${showPinyin ? 'opacity-100' : 'opacity-0'}`}>
                                     <p className="text-3xl md:text-4xl text-slate-500 font-sans tracking-widest">
                                         {selectedWords[currentIndex].pinyin}
                                     </p>
                                 </div>
-                                <h1 className="text-7xl md:text-8xl font-bold text-slate-900 tracking-wider" style={{ wordBreak: 'break-word' }}>
+                                <h1 className="text-8xl md:text-9xl font-bold text-slate-900 tracking-wider" style={{ wordBreak: 'break-word' }}>
                                     {selectedWords[currentIndex].word}
                                 </h1>
                             </div>
 
+                            {/* 导航按钮 */}
                             <div className="flex items-center space-x-6 w-full justify-center">
                                 <button 
                                     onClick={prevWord}
                                     disabled={currentIndex === 0}
-                                    className="p-4 rounded-full bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-700 disabled:opacity-30 disabled:hover:bg-slate-100 transition-colors"
+                                    className="p-4 rounded-full bg-slate-100 text-slate-600 hover:bg-cyan-100 hover:text-cyan-700 disabled:opacity-30 disabled:hover:bg-slate-100 transition-colors"
                                 >
                                     <Icon name="chevron-left" size={32} />
                                 </button>
                                 <button 
                                     onClick={nextWord}
                                     disabled={currentIndex === selectedWords.length - 1}
-                                    className="p-4 rounded-full bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-700 disabled:opacity-30 disabled:hover:bg-slate-100 transition-colors"
+                                    className="p-4 rounded-full bg-slate-100 text-slate-600 hover:bg-cyan-100 hover:text-cyan-700 disabled:opacity-30 disabled:hover:bg-slate-100 transition-colors"
                                 >
                                     <Icon name="chevron-right" size={32} />
                                 </button>
